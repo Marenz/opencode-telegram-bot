@@ -145,6 +145,27 @@ describe("bot/handlers/voice-handler", () => {
     vi.stubEnv("STT_NOTE_PROMPT", "");
   });
 
+  it("edits the status message with quoted recognized text", async () => {
+    const { handleVoiceMessage } = await loadVoiceModule();
+    const { ctx, replyMock, editMessageTextMock } = createVoiceContext();
+    const { deps, processPromptMock } = createVoiceDeps({
+      transcribeAudio: vi.fn().mockResolvedValue({ text: "Line 1\nLine 2" }),
+    });
+
+    await handleVoiceMessage(ctx, deps);
+
+    expect(replyMock).toHaveBeenCalledWith(t("stt.recognizing"));
+    expect(editMessageTextMock).toHaveBeenCalledWith(
+      777,
+      101,
+      "🎤 Recognized:\n> Line 1\n> Line 2",
+      { parse_mode: "MarkdownV2" },
+    );
+    expect(processPromptMock).toHaveBeenCalledWith(ctx, "Line 1\nLine 2", deps, [], {
+      responseMode: "text_only",
+    });
+  });
+
   it("continues with prompt processing when recognized text message edit fails", async () => {
     const { handleVoiceMessage } = await loadVoiceModule();
     const { ctx, replyMock, editMessageTextMock } = createVoiceContext();

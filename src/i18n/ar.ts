@@ -578,7 +578,7 @@ export const ar: I18nDictionary = {
   "legacy.models.error": "🔴 حدث خطأ أثناء تحميل قائمة النماذج.",
 
   "stt.recognizing": "🎤 جارٍ تحويل الصوت إلى نص...",
-  "stt.recognized": "🎤 النص المستخرج من الرسالة الصوتية:\n{text}",
+  "stt.recognized": "🎤 النص المستخرج من الرسالة الصوتية:",
   "stt.not_configured":
     "🎤 ميزة تحويل الصوت إلى نص غير مهيأة بعد.\n\nاضبط STT_API_URL وSTT_API_KEY داخل ملف .env لتفعيلها.",
   "stt.error": "🔴 تعذر تحويل الصوت إلى نص: {error}",

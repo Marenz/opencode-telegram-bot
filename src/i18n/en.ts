@@ -596,7 +596,7 @@ export const en = {
   "legacy.models.error": "🔴 An error occurred while loading models list.",
 
   "stt.recognizing": "🎤 Recognizing audio...",
-  "stt.recognized": "🎤 Recognized:\n{text}",
+  "stt.recognized": "🎤 Recognized:",
   "stt.not_configured":
     "🎤 Voice recognition is not configured.\n\nSet STT_API_URL and STT_API_KEY in .env to enable it.",
   "stt.error": "🔴 Failed to recognize audio: {error}",
