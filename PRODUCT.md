@@ -119,7 +119,7 @@ Current command set:
 - `/commands` - browse and run custom commands (plus built-ins like `init` and `review`)
 - `/skills` - browse and run OpenCode skills
 - `/opencode_start` - start local OpenCode server
-- `/opencode_stop` - stop local OpenCode server
+- `/opencode_stop` - stop local OpenCode server; available during an active request and kills the local process even if health is hung
 - `/help` - show command help
 - `/ls` - interactive file browser for the current project directory; a text file can be attached to the next prompt from its detail view
 
@@ -131,7 +131,7 @@ Interaction routing rules:
 
 - Only one interactive flow can be active at a time (inline menu, permission, question, rename, commands, skills, messages)
 - While an interaction is active, unrelated input is blocked with a contextual hint
-- Allowed utility commands during active interactions: `/help`, `/status`, `/abort`, `/detach`
+- Allowed utility commands during active interactions: `/help`, `/status`, `/abort`, `/detach`, `/opencode_stop`
 - Unknown slash commands return an explicit fallback message
 - Interaction flows do not expire automatically and wait for explicit completion (`answer`, `cancel`, `/abort`, `/detach`, reset/cleanup)
 

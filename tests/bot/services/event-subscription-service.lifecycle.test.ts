@@ -554,6 +554,22 @@ describe("bot/services/event-subscription-service lifecycle", () => {
       expect(assistantRunState.finishRun("session-1", "assertion")).toBeNull();
     });
 
+    it("clearRuntimeState can be invoked without a method receiver", async () => {
+      const { summaryAggregator, service } = await setupService({ startAssistantRun: true });
+      const { assistantRunState } =
+        await import("../../../src/app/managers/assistant-run-state-manager.js");
+
+      emitAssistantTextPart(summaryAggregator, "Answer");
+      await settle();
+      expect(hasActiveStream("session-1")).toBe(true);
+
+      const clearRuntimeState = service.clearRuntimeState;
+      clearRuntimeState("test_unbound_clear");
+
+      expect(hasActiveStream("session-1")).toBe(false);
+      expect(assistantRunState.finishRun("session-1", "assertion")).toBeNull();
+    });
+
     it("clearRuntimeState stops the elapsed-time timers of running tools", async () => {
       const { api, summaryAggregator, service } = await setupService();
 

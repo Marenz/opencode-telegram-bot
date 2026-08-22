@@ -1,11 +1,18 @@
 import { describe, expect, it, vi } from "vitest";
 import type { Context, NextFunction } from "grammy";
 
-const flushPendingPromptMock = vi.hoisted(() => vi.fn());
+const mocked = vi.hoisted(() => ({
+  flushPendingPrompt: vi.fn(),
+  opencodeStopCommand: vi.fn(),
+}));
 
 vi.mock("../../../src/bot/handlers/message-merger.js", () => ({
-  flushPendingPrompt: flushPendingPromptMock,
+  flushPendingPrompt: mocked.flushPendingPrompt,
   __resetMessageMergerForTests: vi.fn(),
+}));
+
+vi.mock("../../../src/bot/commands/opencode-stop-command.js", () => ({
+  opencodeStopCommand: mocked.opencodeStopCommand,
 }));
 
 import {
@@ -19,7 +26,10 @@ describe("bot/routers/command-router", () => {
   it("registers bot slash command handlers", () => {
     const bot = { command: vi.fn(), use: vi.fn() };
 
-    registerCommandRouter(bot as never, { ensureEventSubscription: vi.fn() });
+    registerCommandRouter(bot as never, {
+      ensureEventSubscription: vi.fn(),
+      clearRuntimeState: vi.fn(),
+    });
 
     expect(bot.command.mock.calls.map(([command]) => command)).toEqual([
       "start",
@@ -49,14 +59,37 @@ describe("bot/routers/command-router", () => {
   it("flushes a pending prompt before routing a command", async () => {
     const bot = { command: vi.fn(), use: vi.fn() };
     const next = vi.fn();
-    registerCommandRouter(bot as never, { ensureEventSubscription: vi.fn() });
+    registerCommandRouter(bot as never, {
+      ensureEventSubscription: vi.fn(),
+      clearRuntimeState: vi.fn(),
+    });
     const middleware = bot.use.mock.calls[0][0];
     const ctx = { chat: { id: 123 }, message: { text: "/new" } } as unknown as Context;
 
     await middleware(ctx, next);
 
-    expect(flushPendingPromptMock).toHaveBeenCalledWith(123);
+    expect(mocked.flushPendingPrompt).toHaveBeenCalledWith(123);
     expect(next).toHaveBeenCalledOnce();
+  });
+
+  it("passes clearRuntimeState to the opencode_stop handler", async () => {
+    const bot = { command: vi.fn(), use: vi.fn() };
+    const clearRuntimeState = vi.fn();
+    mocked.opencodeStopCommand.mockReset();
+    mocked.opencodeStopCommand.mockResolvedValue(undefined);
+
+    registerCommandRouter(bot as never, {
+      ensureEventSubscription: vi.fn(),
+      clearRuntimeState,
+    });
+
+    const stopRegistration = bot.command.mock.calls.find(([command]) => command === "opencode_stop");
+    expect(stopRegistration).toBeDefined();
+
+    const ctx = { chat: { id: 123 } } as unknown as Context;
+    await stopRegistration?.[1](ctx);
+
+    expect(mocked.opencodeStopCommand).toHaveBeenCalledWith(ctx, { clearRuntimeState });
   });
 
   it("initializes commands for the authorized chat", async () => {
