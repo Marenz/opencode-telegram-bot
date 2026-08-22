@@ -18,6 +18,7 @@ interface RetryAttemptInfo {
 interface TelegramRateLimitRetryOptions {
   maxRetries?: number;
   fallbackDelayMs?: number;
+  retryTransientServerErrors?: boolean;
   onRetry?: (info: RetryAttemptInfo) => void;
 }
 
@@ -153,6 +154,7 @@ export async function withTelegramRateLimitRetry<T>(
 ): Promise<T> {
   const maxRetries = Math.max(0, Math.floor(options?.maxRetries ?? 3));
   const fallbackDelayMs = options?.fallbackDelayMs ?? 1000;
+  const retryTransientServerErrors = options?.retryTransientServerErrors ?? false;
 
   let attempt = 0;
   while (true) {
@@ -160,7 +162,11 @@ export async function withTelegramRateLimitRetry<T>(
       return await operation();
     } catch (error) {
       const retryAfterMs = getTelegramRetryAfterMs(error, fallbackDelayMs, attempt);
-      if (retryAfterMs === null || attempt >= maxRetries) {
+      if (
+        retryAfterMs === null ||
+        (!retryTransientServerErrors && isTransientTelegramServerError(error)) ||
+        attempt >= maxRetries
+      ) {
         throw error;
       }
 

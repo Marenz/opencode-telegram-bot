@@ -80,12 +80,22 @@ describe("utils/telegram-rate-limit-retry", () => {
     const promise = withTelegramRateLimitRetry(operation, {
       maxRetries: 3,
       fallbackDelayMs: 500,
+      retryTransientServerErrors: true,
     });
 
     await vi.advanceTimersByTimeAsync(500);
 
     await expect(promise).resolves.toBe("ok");
     expect(operation).toHaveBeenCalledTimes(2);
+  });
+
+  it("does not retry transient server errors by default", async () => {
+    const operation = vi
+      .fn()
+      .mockRejectedValueOnce(new Error("Call to 'sendMessage' failed! (502: Bad Gateway)"));
+
+    await expect(withTelegramRateLimitRetry(operation, { maxRetries: 3 })).rejects.toThrow("502");
+    expect(operation).toHaveBeenCalledTimes(1);
   });
 
   it("gives up on transient server errors after maxRetries", async () => {
@@ -98,6 +108,7 @@ describe("utils/telegram-rate-limit-retry", () => {
     const promise = withTelegramRateLimitRetry(operation, {
       maxRetries: 2,
       fallbackDelayMs: 500,
+      retryTransientServerErrors: true,
     }).catch((error: unknown) => error);
 
     await vi.advanceTimersByTimeAsync(10_000);
