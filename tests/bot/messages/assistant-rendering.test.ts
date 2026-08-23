@@ -28,7 +28,6 @@ async function loadAssistantRendering(mode: "raw" | "markdown") {
       },
       bot: {
         messageFormatMode: mode,
-        responseStreamThrottleMs: 500,
       },
       files: { maxFileSizeKb: 100 },
       open: { browserRoots: "" },

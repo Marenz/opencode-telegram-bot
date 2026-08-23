@@ -162,8 +162,7 @@ function findFooterCalls(api: FakeBotApi): unknown[][] {
 /**
  * Lets the aggregator's setImmediate dispatch and the callbacks it triggers
  * run to completion. Anything that has to cross the stream throttle waits with
- * vi.waitFor instead: RESPONSE_STREAM_THROTTLE_MS is read at module load,
- * before beforeEach can stub it, so its value is not known here.
+ * vi.waitFor instead of assuming a 1s first flush.
  */
 async function settle(iterations = 4): Promise<void> {
   for (let attempt = 0; attempt < iterations; attempt++) {
@@ -230,7 +229,6 @@ describe("bot/services/event-subscription-service lifecycle", () => {
     vi.stubEnv("TELEGRAM_ALLOWED_USER_ID", "123456789");
     vi.stubEnv("OPENCODE_MODEL_PROVIDER", "test-provider");
     vi.stubEnv("OPENCODE_MODEL_ID", "test-model");
-    vi.stubEnv("RESPONSE_STREAM_THROTTLE_MS", "1");
     vi.stubEnv(
       "OPENCODE_TELEGRAM_HOME",
       await mkdtemp(path.join(os.tmpdir(), "event-service-lifecycle-")),
@@ -411,6 +409,21 @@ describe("bot/services/event-subscription-service lifecycle", () => {
   });
 
   describe("session idle ordering", () => {
+    it("resets stream throttle on idle even when no run was started", async () => {
+      const { summaryAggregator } = await setupService();
+      const { noteStreamActivity, getStreamThrottleMs } = await import(
+        "../../../src/bot/streaming/stream-throttle.js"
+      );
+
+      noteStreamActivity("session-1", Date.now() - 10 * 60_000);
+      expect(getStreamThrottleMs("session-1")).toBe(5_000);
+
+      emitSessionIdle(summaryAggregator);
+      await settle();
+
+      expect(getStreamThrottleMs("session-1")).toBe(1_000);
+    });
+
     it("holds the run footer until the pending completion task finishes", async () => {
       const { api, summaryAggregator } = await setupService({
         startAssistantRun: true,

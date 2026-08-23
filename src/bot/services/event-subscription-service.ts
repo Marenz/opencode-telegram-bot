@@ -59,6 +59,10 @@ import { ResponseStreamer, type StreamingMessagePayload } from "../streaming/res
 import { ToolCallStreamer, type ToolStreamKey } from "../streaming/tool-call-streamer.js";
 import { RunningToolTracker, type RunningToolTick } from "../streaming/running-tool-tracker.js";
 import { CompactProgressStreamer } from "../streaming/compact-progress-streamer.js";
+import {
+  getSessionStreamThrottleMs,
+  resetStreamThrottle,
+} from "../streaming/stream-throttle.js";
 import { attachManager } from "../../app/managers/attach-manager.js";
 import {
   markAttachedSessionBusy,
@@ -92,7 +96,6 @@ import {
 import { stopEventListening, subscribeToEvents } from "../../opencode/events.js";
 
 const TELEGRAM_DOCUMENT_CAPTION_MAX_LENGTH = 1024;
-const RESPONSE_STREAM_THROTTLE_MS = config.bot.responseStreamThrottleMs;
 const SESSION_RETRY_PREFIX = "🔁";
 const SUBAGENT_STREAM_PREFIX = "🧩";
 const TOOL_ELAPSED_TICK_INTERVAL_MS = 5000;
@@ -220,7 +223,7 @@ class EventSubscriptionService implements BotEventSubscriptionService {
     setPromptResponseModeClearerForReconciliation(clearPromptResponseMode);
 
     this.compactProgressStreamer = new CompactProgressStreamer({
-      throttleMs: RESPONSE_STREAM_THROTTLE_MS,
+      throttleMs: getSessionStreamThrottleMs,
       sendText: async (sessionId, text) => {
         if (!this.botInstance || !this.chatIdInstance || this.chatIdInstance <= 0) {
           throw new Error("Bot context missing for compact progress send");
@@ -262,7 +265,7 @@ class EventSubscriptionService implements BotEventSubscriptionService {
     });
 
     this.toolCallStreamer = new ToolCallStreamer({
-      throttleMs: RESPONSE_STREAM_THROTTLE_MS,
+      throttleMs: getSessionStreamThrottleMs,
       sendText: async (sessionId, text) => {
         if (!this.botInstance || !this.chatIdInstance || this.chatIdInstance <= 0) {
           throw new Error("Bot context missing for tool stream send");
@@ -1105,10 +1108,13 @@ class EventSubscriptionService implements BotEventSubscriptionService {
     });
 
     summaryAggregator.setOnSessionIdle(async (sessionId) => {
+      resetStreamThrottle(sessionId);
       await markAttachedSessionIdle(sessionId);
       // Cleared unconditionally: a session can go idle after it stopped being
-      // the current one, and the early returns below would leak the tracker.
+      // the current one, and the early returns below would leak the tracker
+      // or fire a compact-progress timer armed before the run stopped.
       this.clearToolElapsedState(sessionId, "session_idle");
+      this.compactProgressStreamer.clearSession(sessionId, "session_idle");
       await this.sessionCompletionTasks.get(sessionId)?.catch(() => undefined);
 
       const completedRun = assistantRunState.finishRun(sessionId, "session_idle");
@@ -1406,7 +1412,7 @@ class EventSubscriptionService implements BotEventSubscriptionService {
   private createResponseStreamer(mode: ResponseStreamingMode): ResponseStreamer {
     if (mode === "draft") {
       return new ResponseStreamer({
-        throttleMs: RESPONSE_STREAM_THROTTLE_MS,
+        throttleMs: getSessionStreamThrottleMs,
         sendPart: async (part) => {
           if (!this.botInstance || !this.chatIdInstance || this.chatIdInstance <= 0) {
             throw new Error("Bot context missing for draft send");
@@ -1450,7 +1456,7 @@ class EventSubscriptionService implements BotEventSubscriptionService {
     }
 
     return new ResponseStreamer({
-      throttleMs: RESPONSE_STREAM_THROTTLE_MS,
+      throttleMs: getSessionStreamThrottleMs,
       sendPart: async (part, options) => {
         if (!this.botInstance || !this.chatIdInstance || this.chatIdInstance <= 0) {
           throw new Error("Bot context missing for streamed send");

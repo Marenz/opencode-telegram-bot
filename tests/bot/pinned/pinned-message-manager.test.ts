@@ -1,4 +1,4 @@
-import { beforeEach, describe, expect, it, vi } from "vitest";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { defined } from "../../helpers/defined.js";
 
 const mocked = vi.hoisted(() => ({
@@ -65,8 +65,15 @@ vi.mock("../../../src/bot/pinned/pinned-message-format.js", () => ({
 
 // Must import AFTER vi.mock calls
 const { pinnedMessageManager } = await import("../../../src/bot/pinned/pinned-message-manager.js");
+const { __resetStreamThrottleForTests, noteStreamActivity } = await import(
+  "../../../src/bot/streaming/stream-throttle.js"
+);
 
 describe("pinned/manager", () => {
+  afterEach(() => {
+    vi.useRealTimers();
+  });
+
   let fakeApi: {
     sendMessage: ReturnType<typeof vi.fn>;
     editMessageText: ReturnType<typeof vi.fn>;
@@ -82,6 +89,7 @@ describe("pinned/manager", () => {
       unpinAllChatMessages: vi.fn().mockResolvedValue(undefined),
     };
 
+    __resetStreamThrottleForTests();
     // Reset manager state by re-initializing
     pinnedMessageManager.initialize(fakeApi as never, 123);
 
@@ -372,7 +380,17 @@ describe("pinned/manager", () => {
       expect(pinnedMessageManager.getState().changedFiles).toEqual([
         { file: "D:/repo/src/a.ts", additions: 5, deletions: 3 },
       ]);
-      expect(String(defined(fakeApi.editMessageText.mock.calls[0]?.[2]))).toContain("src/a.ts (+5 -3)");
+    });
+
+    it("lengthens the debounce window after a minute of activity", async () => {
+      noteStreamActivity("ses-1", Date.now() - 60_000);
+
+      pinnedMessageManager.addFileChange({ file: "D:/repo/src/b.ts", additions: 1, deletions: 0 });
+      await vi.advanceTimersByTimeAsync(1999);
+      expect(fakeApi.editMessageText).not.toHaveBeenCalled();
+
+      await vi.advanceTimersByTimeAsync(1);
+      expect(fakeApi.editMessageText).toHaveBeenCalledTimes(1);
     });
   });
 
@@ -575,6 +593,7 @@ describe("pinned/manager", () => {
     beforeEach(async () => {
       await pinnedMessageManager.onSessionChange("ses-1", "Test Session");
       fakeApi.editMessageText.mockClear();
+      vi.useFakeTimers({ toFake: ["setTimeout", "clearTimeout"] });
     });
 
     it("ignores an empty diff when tool events already collected file changes", async () => {
@@ -594,6 +613,8 @@ describe("pinned/manager", () => {
         { file: "D:/repo/src/a.ts", additions: 1, deletions: 0 },
       ]);
 
+      await vi.advanceTimersByTimeAsync(1000);
+
       expect(fakeApi.editMessageText).toHaveBeenCalledTimes(1);
     });
 
@@ -602,9 +623,11 @@ describe("pinned/manager", () => {
         { file: "D:/repo/src/a.ts", additions: 1, deletions: 0 },
         { file: "D:/repo/src/b.ts", additions: 2, deletions: 0 },
       ]);
+      await vi.advanceTimersByTimeAsync(1000);
       await pinnedMessageManager.onSessionDiff([
         { file: "D:/repo/src/a.ts", additions: 1, deletions: 0 },
       ]);
+      await vi.advanceTimersByTimeAsync(1000);
 
       expect(fakeApi.editMessageText).toHaveBeenCalledTimes(2);
       expect(String(defined(fakeApi.editMessageText.mock.calls[1]?.[2]))).not.toContain("src/b.ts");
@@ -614,9 +637,11 @@ describe("pinned/manager", () => {
       await pinnedMessageManager.onSessionDiff([
         { file: "D:/repo/src/a.ts", additions: 1, deletions: 0 },
       ]);
+      await vi.advanceTimersByTimeAsync(1000);
       await pinnedMessageManager.onSessionDiff([
         { file: "D:/repo/src/a.ts", additions: 2, deletions: 0 },
       ]);
+      await vi.advanceTimersByTimeAsync(1000);
 
       expect(fakeApi.editMessageText).toHaveBeenCalledTimes(2);
       expect(String(defined(fakeApi.editMessageText.mock.calls[1]?.[2]))).toContain("src/a.ts (+2)");
@@ -791,6 +816,7 @@ describe("pinned/manager", () => {
     beforeEach(async () => {
       await pinnedMessageManager.onSessionChange("ses-1", "Test Session");
       fakeApi.editMessageText.mockClear();
+      vi.useFakeTimers({ toFake: ["setTimeout", "clearTimeout"] });
     });
 
     it("lists at most ten files and reports the rest as a count", async () => {
@@ -801,6 +827,7 @@ describe("pinned/manager", () => {
           deletions: 0,
         })),
       );
+      await vi.advanceTimersByTimeAsync(1000);
 
       const text = String(defined(fakeApi.editMessageText.mock.calls[0]?.[2]));
       expect(text).toContain("Files (12):");
@@ -813,6 +840,7 @@ describe("pinned/manager", () => {
       await pinnedMessageManager.onSessionDiff([
         { file: "C:/other/deep/nested/path/file.ts", additions: 1, deletions: 0 },
       ]);
+      await vi.advanceTimersByTimeAsync(1000);
 
       expect(String(defined(fakeApi.editMessageText.mock.calls[0]?.[2]))).toContain(".../nested/path/file.ts");
     });

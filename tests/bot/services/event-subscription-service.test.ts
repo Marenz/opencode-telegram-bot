@@ -264,10 +264,8 @@ function emitSubagentTool(summaryAggregator: { processEvent(event: Event): void 
 }
 
 /**
- * The stream throttle comes from RESPONSE_STREAM_THROTTLE_MS, which the service
- * reads at module load - before beforeEach can stub it. A developer whose shell
- * carries a project .env therefore runs with a different throttle, so these
- * numbers stay well above any realistic value instead of assuming the default.
+ * Stream flushes start at 1s and can grow during a run. These numbers stay well
+ * above the first throttle step so fake-timer helpers do not race the flush.
  *
  * ELAPSED_SETTLE_MS keeps the fake clock inside the same 20-30s display bucket,
  * so the asserted text stays "20s" no matter how long the flush took.
@@ -327,7 +325,6 @@ describe("bot/services/event-subscription-service", () => {
     vi.stubEnv("TELEGRAM_ALLOWED_USER_ID", "123456789");
     vi.stubEnv("OPENCODE_MODEL_PROVIDER", "test-provider");
     vi.stubEnv("OPENCODE_MODEL_ID", "test-model");
-    vi.stubEnv("RESPONSE_STREAM_THROTTLE_MS", "1");
     vi.stubEnv("OPENCODE_TELEGRAM_HOME", await mkdtemp(path.join(os.tmpdir(), "event-service-")));
     tempHome = process.env.OPENCODE_TELEGRAM_HOME!;
     setRuntimeMode("installed");
@@ -484,6 +481,20 @@ describe("bot/services/event-subscription-service", () => {
       expect(texts.some((text) => text.includes("🕒"))).toBe(false);
     });
 
+    it("does not send compact progress after the session goes idle", async () => {
+      const { api, summaryAggregator } = await setupService(false);
+      const settingsStore = await import("../../../src/app/stores/settings-store.js");
+      settingsStore.setCompactOutputMode(true);
+      await new Promise((resolve) => setTimeout(resolve, 50));
+
+      useTrackerFakeTimers();
+      emitBashTool(summaryAggregator, "running");
+      emitSessionIdle(summaryAggregator);
+      await flushPendingDispatch();
+
+      expect(collectSentTexts(api).some((text) => text.includes("⏳ Working"))).toBe(false);
+    });
+
     it("adds the duration to the compact progress line", async () => {
       const { api, summaryAggregator } = await setupService(false);
       const settingsStore = await import("../../../src/app/stores/settings-store.js");
@@ -600,9 +611,7 @@ describe("bot/services/event-subscription-service", () => {
 
     emitThinkingPart(summaryAggregator, "First thought");
 
-    // The timeout must stay above RESPONSE_STREAM_THROTTLE_MS, which the service
-    // reads at module load and beforeEach cannot stub: an ambient value equal to
-    // the timeout makes the first flush race the wait.
+    // First stream flush is 1s; keep the wait well above that.
     await vi.waitFor(
       () => {
         expect(api.sendMessage).toHaveBeenCalledTimes(1);
@@ -629,12 +638,15 @@ describe("bot/services/event-subscription-service", () => {
 
     emitThinkingPart(summaryAggregator, "Hidden thought");
 
-    await vi.waitFor(() => {
-      expect(api.sendMessage).toHaveBeenCalledTimes(1);
-    });
+    await vi.waitFor(
+      () => {
+        expect(api.sendMessage).toHaveBeenCalledTimes(1);
+      },
+      { timeout: 10_000 },
+    );
     expect(api.editMessageText).not.toHaveBeenCalled();
     expect(api.sendMessageDraft).not.toHaveBeenCalled();
-  });
+  }, 30_000);
 
   it("does not send assistant run footer when it is disabled", async () => {
     const { api, summaryAggregator } = await setupService(true, {

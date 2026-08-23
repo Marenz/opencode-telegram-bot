@@ -159,30 +159,6 @@ describe("config boolean env parsing", () => {
     expect(config.bot.scheduledTaskExecutionTimeoutMinutes).toBe(120);
   });
 
-  it("uses default response stream throttle when RESPONSE_STREAM_THROTTLE_MS is missing", async () => {
-    vi.stubEnv("RESPONSE_STREAM_THROTTLE_MS", "");
-
-    const config = await loadConfig();
-
-    expect(config.bot.responseStreamThrottleMs).toBe(1000);
-  });
-
-  it("parses RESPONSE_STREAM_THROTTLE_MS as a positive integer", async () => {
-    vi.stubEnv("RESPONSE_STREAM_THROTTLE_MS", "750");
-
-    const config = await loadConfig();
-
-    expect(config.bot.responseStreamThrottleMs).toBe(750);
-  });
-
-  it("falls back to default response stream throttle on invalid value", async () => {
-    vi.stubEnv("RESPONSE_STREAM_THROTTLE_MS", "zero");
-
-    const config = await loadConfig();
-
-    expect(config.bot.responseStreamThrottleMs).toBe(1000);
-  });
-
   it("uses default bash tool display length when env is missing", async () => {
     vi.stubEnv("BASH_TOOL_DISPLAY_MAX_LENGTH", "");
 

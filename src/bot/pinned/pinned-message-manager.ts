@@ -22,6 +22,7 @@ import {
   formatCostLine,
   formatModelDisplayName,
 } from "./pinned-message-format.js";
+import { getSessionStreamThrottleMs } from "../streaming/stream-throttle.js";
 
 class PinnedMessageManager {
   private api: Api | null = null;
@@ -373,7 +374,7 @@ class PinnedMessageManager {
 
     this.state.changedFiles = diffs;
     logger.debug(`[PinnedManager] Session diff updated: ${diffs.length} files`);
-    await this.updatePinnedMessage();
+    this.scheduleDebouncedUpdate();
   }
 
   /**
@@ -399,10 +400,12 @@ class PinnedMessageManager {
     if (this.updateDebounceTimer) {
       clearTimeout(this.updateDebounceTimer);
     }
+
+    const delayMs = getSessionStreamThrottleMs(this.state.sessionId ?? "");
     this.updateDebounceTimer = setTimeout(() => {
       this.updateDebounceTimer = null;
       void this.updatePinnedMessage();
-    }, 1000);
+    }, delayMs);
   }
 
   /**

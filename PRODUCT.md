@@ -64,6 +64,7 @@ No public inbound ports are required for normal usage.
 - Render assistant replies with native Telegram formatting: real tables with the column alignment declared in markdown, bullet lists with their nesting, block quotes that keep their nested content, headings, and syntax-highlighted code. Numbered lists and checklists keep literal markers (`1.`, ✅/🔲), because Telegram clients number a native ordered list from zero and do not draw the native checkbox at all
 - Deliver reasoning as a collapsed quote that expands on tap
 - Hide full model reasoning by default; optionally stream it in the thinking message when explicitly enabled
+- Stream intermediate assistant/tool/thinking edits and pinned file-change updates once per second for the first minute, then slow down to 2s / 5s / 10s so long runs stay under Telegram rate limits; the interval resets when the run stops
 - Split long responses into multiple Telegram messages, which is now rare: native messages hold 32768 characters instead of 4096
 - Send code updates as files (size-limited)
 

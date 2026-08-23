@@ -847,4 +847,36 @@ describe("bot/streaming/response-streamer", () => {
       expect(completePart).toHaveBeenCalledTimes(1);
     });
   });
+
+  it("reads throttleMs again for the next flush cycle", async () => {
+    vi.useFakeTimers();
+
+    let throttleMs = 200;
+    let nextMessageId = 1;
+    const sendPart = vi.fn(async (part) => ({
+      messageId: nextMessageId++,
+      deliveredSignature: signature(part),
+    }));
+    const editPart = vi.fn(async (_messageId, part) => ({ deliveredSignature: signature(part) }));
+    const deleteText = vi.fn().mockResolvedValue(undefined);
+    const streamer = new ResponseStreamer({
+      throttleMs: () => throttleMs,
+      sendPart,
+      editPart,
+      deleteText,
+    });
+
+    streamer.enqueue("s1", "m1", { parts: [plainPart("first")] });
+    await vi.advanceTimersByTimeAsync(200);
+    expect(sendPart).toHaveBeenCalledTimes(1);
+
+    throttleMs = 2000;
+    streamer.enqueue("s1", "m1", { parts: [plainPart("second")] });
+    await vi.advanceTimersByTimeAsync(1999);
+    expect(editPart).not.toHaveBeenCalled();
+
+    await vi.advanceTimersByTimeAsync(1);
+    expect(editPart).toHaveBeenCalledTimes(1);
+    expect(editPart).toHaveBeenCalledWith(1, plainPart("second"), undefined);
+  });
 });

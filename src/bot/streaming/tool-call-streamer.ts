@@ -1,4 +1,8 @@
 import { logger } from "../../utils/logger.js";
+import {
+  resolveStreamThrottleMs,
+  type StreamThrottleMs,
+} from "./stream-throttle.js";
 
 const TELEGRAM_MESSAGE_SAFE_LENGTH = 4000;
 const DEFAULT_STREAM_KEY = "default";
@@ -6,7 +10,7 @@ const DEFAULT_STREAM_KEY = "default";
 export type ToolStreamKey = "default" | "subagent" | "todo";
 
 interface ToolCallStreamerOptions {
-  throttleMs: number;
+  throttleMs: StreamThrottleMs;
   sendText: (sessionId: string, text: string) => Promise<number>;
   editText: (sessionId: string, telegramMessageId: number, text: string) => Promise<void>;
   deleteText: (sessionId: string, telegramMessageId: number) => Promise<void>;
@@ -108,7 +112,7 @@ function buildParts(entries: StreamEntry[]): string[] {
 }
 
 export class ToolCallStreamer {
-  private readonly throttleMs: number;
+  private readonly throttleMs: StreamThrottleMs;
   private readonly sendText: ToolCallStreamerOptions["sendText"];
   private readonly editText: ToolCallStreamerOptions["editText"];
   private readonly deleteText: ToolCallStreamerOptions["deleteText"];
@@ -116,10 +120,14 @@ export class ToolCallStreamer {
   private readonly allStates: Set<StreamState> = new Set();
 
   constructor(options: ToolCallStreamerOptions) {
-    this.throttleMs = Math.max(0, Math.floor(options.throttleMs));
+    this.throttleMs = options.throttleMs;
     this.sendText = options.sendText;
     this.editText = options.editText;
     this.deleteText = options.deleteText;
+  }
+
+  private resolveThrottleMs(sessionId: string): number {
+    return resolveStreamThrottleMs(this.throttleMs, sessionId);
   }
 
   append(sessionId: string, text: string, streamKey: ToolStreamKey = DEFAULT_STREAM_KEY): void {
@@ -295,7 +303,8 @@ export class ToolCallStreamer {
       return;
     }
 
-    if (this.throttleMs === 0) {
+    const throttleMs = this.resolveThrottleMs(state.sessionId);
+    if (throttleMs === 0) {
       void this.enqueueTask(state, () => this.syncState(state, "immediate")).catch((error) => {
         logger.error(`[ToolCallStreamer] Immediate sync failed: session=${state.sessionId}`, error);
       });
@@ -312,7 +321,7 @@ export class ToolCallStreamer {
           );
         },
       );
-    }, this.throttleMs);
+    }, throttleMs);
   }
 
   private enqueueTask(state: StreamState, task: () => Promise<boolean>): Promise<boolean> {
@@ -375,7 +384,7 @@ export class ToolCallStreamer {
           return false;
         }
 
-        const delayMs = Math.max(this.throttleMs, retryAfterMs);
+        const delayMs = Math.max(this.resolveThrottleMs(state.sessionId), retryAfterMs);
         logger.warn(
           `[ToolCallStreamer] Stream sync rate-limited, retrying in ${delayMs}ms: session=${state.sessionId}, reason=${reason}`,
           error,

@@ -9,6 +9,7 @@ import type { SessionInfo } from "../types/session.js";
 import { getCurrentSession } from "./session-service.js";
 import { getCurrentProject } from "../stores/settings-store.js";
 import { attachManager } from "../managers/attach-manager.js";
+import { resetStreamThrottle } from "../../bot/streaming/stream-throttle.js";
 import { logger } from "../../utils/logger.js";
 import { isExpectedOpencodeUnavailableError } from "../../utils/opencode-error.js";
 
@@ -249,6 +250,11 @@ export async function restoreAttachedCurrentSession(
 export function detachAttachedSession(reason: string): void {
   if (!attachManager.isAttached()) {
     return;
+  }
+
+  const attachedSessionId = attachManager.getSnapshot()?.sessionId;
+  if (attachedSessionId) {
+    resetStreamThrottle(attachedSessionId);
   }
 
   summaryAggregator.clear();
