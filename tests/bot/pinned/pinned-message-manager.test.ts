@@ -1,4 +1,5 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
+import { defined } from "../../helpers/defined.js";
 
 const mocked = vi.hoisted(() => ({
   opencodeClient: {
@@ -343,7 +344,7 @@ describe("pinned/manager", () => {
       await vi.advanceTimersByTimeAsync(1000);
 
       expect(fakeApi.editMessageText).toHaveBeenCalledTimes(1);
-      const text = String(fakeApi.editMessageText.mock.calls[0][2]);
+      const text = String(defined(fakeApi.editMessageText.mock.calls[0]?.[2]));
       expect(text).toContain("src/a.ts (+1)");
       expect(text).toContain("src/b.ts (+2 -1)");
       expect(text).toContain("src/c.ts (+3)");
@@ -371,7 +372,7 @@ describe("pinned/manager", () => {
       expect(pinnedMessageManager.getState().changedFiles).toEqual([
         { file: "D:/repo/src/a.ts", additions: 5, deletions: 3 },
       ]);
-      expect(String(fakeApi.editMessageText.mock.calls[0][2])).toContain("src/a.ts (+5 -3)");
+      expect(String(defined(fakeApi.editMessageText.mock.calls[0]?.[2]))).toContain("src/a.ts (+5 -3)");
     });
   });
 
@@ -393,7 +394,7 @@ describe("pinned/manager", () => {
       const third = pinnedMessageManager.onCostUpdate(3);
 
       expect(fakeApi.editMessageText).toHaveBeenCalledTimes(1);
-      expect(String(fakeApi.editMessageText.mock.calls[0][2])).toContain("$1.00");
+      expect(String(defined(fakeApi.editMessageText.mock.calls[0]?.[2]))).toContain("$1.00");
 
       releaseFirstEdit();
       await Promise.all([first, second, third]);
@@ -401,7 +402,7 @@ describe("pinned/manager", () => {
       // The two updates that arrived during the first edit collapse into a
       // single trailing edit carrying the latest state.
       expect(fakeApi.editMessageText).toHaveBeenCalledTimes(2);
-      expect(String(fakeApi.editMessageText.mock.calls[1][2])).toContain("$6.00");
+      expect(String(defined(fakeApi.editMessageText.mock.calls[1]?.[2]))).toContain("$6.00");
     });
 
     it("skips a non-forced update when the rendered text did not change", async () => {
@@ -606,7 +607,7 @@ describe("pinned/manager", () => {
       ]);
 
       expect(fakeApi.editMessageText).toHaveBeenCalledTimes(2);
-      expect(String(fakeApi.editMessageText.mock.calls[1][2])).not.toContain("src/b.ts");
+      expect(String(defined(fakeApi.editMessageText.mock.calls[1]?.[2]))).not.toContain("src/b.ts");
     });
 
     it("applies a diff that changes the line counts of the same file", async () => {
@@ -618,7 +619,7 @@ describe("pinned/manager", () => {
       ]);
 
       expect(fakeApi.editMessageText).toHaveBeenCalledTimes(2);
-      expect(String(fakeApi.editMessageText.mock.calls[1][2])).toContain("src/a.ts (+2)");
+      expect(String(defined(fakeApi.editMessageText.mock.calls[1]?.[2]))).toContain("src/a.ts (+2)");
     });
   });
 
@@ -712,7 +713,7 @@ describe("pinned/manager", () => {
       await pinnedMessageManager.onSessionTitleUpdate("Renamed session");
 
       expect(fakeApi.editMessageText).toHaveBeenCalledTimes(1);
-      expect(String(fakeApi.editMessageText.mock.calls[0][2])).toContain("Renamed session");
+      expect(String(defined(fakeApi.editMessageText.mock.calls[0]?.[2]))).toContain("Renamed session");
     });
 
     it("drops the busy flag as soon as the session is detached", async () => {
@@ -801,7 +802,7 @@ describe("pinned/manager", () => {
         })),
       );
 
-      const text = String(fakeApi.editMessageText.mock.calls[0][2]);
+      const text = String(defined(fakeApi.editMessageText.mock.calls[0]?.[2]));
       expect(text).toContain("Files (12):");
       expect(text).toContain("src/file-9.ts");
       expect(text).not.toContain("src/file-10.ts");
@@ -813,7 +814,7 @@ describe("pinned/manager", () => {
         { file: "C:/other/deep/nested/path/file.ts", additions: 1, deletions: 0 },
       ]);
 
-      expect(String(fakeApi.editMessageText.mock.calls[0][2])).toContain(".../nested/path/file.ts");
+      expect(String(defined(fakeApi.editMessageText.mock.calls[0]?.[2]))).toContain(".../nested/path/file.ts");
     });
   });
 

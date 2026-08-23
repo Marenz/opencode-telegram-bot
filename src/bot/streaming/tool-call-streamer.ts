@@ -52,7 +52,11 @@ function getRetryAfterMs(error: unknown): number | null {
     return null;
   }
 
-  const seconds = Number.parseInt(retryMatch[1], 10);
+  const secondsText = retryMatch[1];
+  if (!secondsText) {
+    return null;
+  }
+  const seconds = Number.parseInt(secondsText, 10);
   if (!Number.isFinite(seconds) || seconds <= 0) {
     return null;
   }
@@ -405,6 +409,9 @@ export class ToolCallStreamer {
       }
 
       const text = parts[index];
+      if (text === undefined) {
+        continue;
+      }
       const currentMessageId = state.telegramMessageIds[index];
 
       if (currentMessageId) {

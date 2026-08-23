@@ -1,5 +1,6 @@
 import { describe, expect, it, vi } from "vitest";
 import type { Context, NextFunction } from "grammy";
+import { defined } from "../../helpers/defined.js";
 
 const mocked = vi.hoisted(() => ({
   flushPendingPrompt: vi.fn(),
@@ -63,7 +64,7 @@ describe("bot/routers/command-router", () => {
       ensureEventSubscription: vi.fn(),
       clearRuntimeState: vi.fn(),
     });
-    const middleware = bot.use.mock.calls[0][0];
+    const middleware = defined(bot.use.mock.calls[0]?.[0]);
     const ctx = { chat: { id: 123 }, message: { text: "/new" } } as unknown as Context;
 
     await middleware(ctx, next);

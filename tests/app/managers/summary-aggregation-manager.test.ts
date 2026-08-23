@@ -2,6 +2,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import type { Event } from "@opencode-ai/sdk/v2";
 import { summaryAggregator } from "../../../src/app/managers/summary-aggregation-manager.js";
 import { logger } from "../../../src/utils/logger.js";
+import { defined } from "../../helpers/defined.js";
 
 const mocked = vi.hoisted(() => ({
   getCurrentProjectMock: vi.fn(),
@@ -85,7 +86,7 @@ describe("summary/aggregator", () => {
     } as unknown as Event);
 
     expect(onTool).toHaveBeenCalledTimes(1);
-    expect(onTool.mock.calls[0][0]).toEqual(
+    expect(defined(onTool.mock.calls[0]?.[0])).toEqual(
       expect.objectContaining({
         sessionId: "session-1",
         callId: "call-1",
@@ -134,7 +135,7 @@ describe("summary/aggregator", () => {
     } as unknown as Event);
 
     expect(onRootToolUpdate).toHaveBeenCalledTimes(1);
-    expect(onRootToolUpdate.mock.calls[0][0]).toEqual(
+    expect(defined(onRootToolUpdate.mock.calls[0]?.[0])).toEqual(
       expect.objectContaining({
         sessionId: "session-1",
         callId: "call-task",
@@ -771,7 +772,7 @@ describe("summary/aggregator", () => {
     } as unknown as Event);
 
     expect(onTool).toHaveBeenCalledTimes(1);
-    expect(onTool.mock.calls[0][0]).toEqual(
+    expect(defined(onTool.mock.calls[0]?.[0])).toEqual(
       expect.objectContaining({
         tool: "write",
         hasFileAttachment: false,
@@ -1601,7 +1602,7 @@ describe("summary/aggregator", () => {
     await new Promise<void>((resolve) => setImmediate(resolve));
 
     expect(onThinking).toHaveBeenCalledTimes(3);
-    expect(onThinking.mock.calls[0][0]).toEqual(
+    expect(defined(onThinking.mock.calls[0]?.[0])).toEqual(
       expect.objectContaining({
         sessionId: "session-1",
         messageId: "message-multi-reasoning",
@@ -1609,7 +1610,7 @@ describe("summary/aggregator", () => {
         sections: [{ id: "part-reasoning-0", text: "Thinking step 0" }],
       }),
     );
-    expect(onThinking.mock.calls[2][0]).toEqual(
+    expect(defined(onThinking.mock.calls[2]?.[0])).toEqual(
       expect.objectContaining({
         sessionId: "session-1",
         messageId: "message-multi-reasoning",
@@ -1729,7 +1730,7 @@ describe("summary/aggregator", () => {
 
     expect(onToolFile).toHaveBeenCalledTimes(1);
 
-    const filePayload = onToolFile.mock.calls[0][0] as {
+    const filePayload = defined(onToolFile.mock.calls[0]?.[0]) as {
       sessionId: string;
       tool: string;
       hasFileAttachment: boolean;
@@ -1793,7 +1794,7 @@ describe("summary/aggregator", () => {
 
     expect(onToolFile).toHaveBeenCalledTimes(1);
 
-    const filePayload = onToolFile.mock.calls[0][0] as {
+    const filePayload = defined(onToolFile.mock.calls[0]?.[0]) as {
       hasFileAttachment: boolean;
       fileData: {
         filename: string;
@@ -2006,7 +2007,7 @@ describe("summary/aggregator", () => {
     await vi.waitFor(() => {
       expect(onPermission).toHaveBeenCalledTimes(1);
     });
-    expect(onPermission.mock.calls[0][0]).toEqual(
+    expect(defined(onPermission.mock.calls[0]?.[0])).toEqual(
       expect.objectContaining({
         id: "req-child-1",
         sessionID: "child-session-1",

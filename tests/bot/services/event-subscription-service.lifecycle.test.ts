@@ -6,6 +6,7 @@ import type { Bot, Context } from "grammy";
 import type { Event } from "@opencode-ai/sdk/v2";
 import { setRuntimeMode } from "../../../src/runtime/mode.js";
 import { resetSingletonState } from "../../helpers/reset-singleton-state.js";
+import { defined } from "../../helpers/defined.js";
 
 const mocked = vi.hoisted(() => ({
   subscribeToEvents: vi.fn(),
@@ -534,7 +535,7 @@ describe("bot/services/event-subscription-service lifecycle", () => {
 
       // The draft is persisted with a real message, never edited in place.
       expect(api.editMessageText).not.toHaveBeenCalled();
-      expect(api.sendMessage.mock.calls[0][1]).toBe("Partial answer, now complete");
+      expect(defined(api.sendMessage.mock.calls[0]?.[1])).toBe("Partial answer, now complete");
     }, 30_000);
   });
 
@@ -708,8 +709,8 @@ describe("bot/services/event-subscription-service lifecycle", () => {
       await vi.waitFor(() => {
         expect(api.sendMessage).toHaveBeenCalledTimes(1);
       });
-      expect(api.sendMessage.mock.calls[0][1]).toContain("Background work");
-      expect(api.sendMessage.mock.calls[0][2]).toHaveProperty("reply_markup");
+      expect(defined(api.sendMessage.mock.calls[0]?.[1])).toContain("Background work");
+      expect(defined(api.sendMessage.mock.calls[0])[2]).toHaveProperty("reply_markup");
     });
 
     it("labels an untitled background session by its shortened id", async () => {
@@ -732,8 +733,8 @@ describe("bot/services/event-subscription-service lifecycle", () => {
       await vi.waitFor(() => {
         expect(api.sendMessage).toHaveBeenCalledTimes(1);
       });
-      expect(api.sendMessage.mock.calls[0][1]).toContain("bg-sessi");
-      expect(api.sendMessage.mock.calls[0][1]).not.toContain("bg-session-123456");
+      expect(defined(api.sendMessage.mock.calls[0]?.[1])).toContain("bg-sessi");
+      expect(defined(api.sendMessage.mock.calls[0]?.[1])).not.toContain("bg-session-123456");
     });
   });
 
@@ -751,7 +752,7 @@ describe("bot/services/event-subscription-service lifecycle", () => {
       await vi.waitFor(() => {
         expect(api.sendMessage).toHaveBeenCalledTimes(1);
       });
-      expect(api.sendMessage.mock.calls[0][1]).toContain("provider exploded");
+      expect(defined(api.sendMessage.mock.calls[0]?.[1])).toContain("provider exploded");
       expect(foregroundSessionState.isBusy()).toBe(false);
       expect(assistantRunState.finishRun("session-1", "assertion")).toBeNull();
     });
@@ -781,7 +782,7 @@ describe("bot/services/event-subscription-service lifecycle", () => {
       await vi.waitFor(() => {
         expect(api.sendMessage).toHaveBeenCalledTimes(1);
       });
-      const text = String(api.sendMessage.mock.calls[0][1]);
+      const text = String(defined(api.sendMessage.mock.calls[0]?.[1]));
       expect(text).toContain("...");
       expect(text.length).toBeLessThan(3700);
     });
@@ -871,7 +872,7 @@ describe("bot/services/event-subscription-service lifecycle", () => {
       await vi.waitFor(() => {
         expect(api.sendMessage).toHaveBeenCalledTimes(1);
       });
-      expect(String(api.sendMessage.mock.calls[0][1])).toContain("typed in the terminal");
+      expect(String(defined(api.sendMessage.mock.calls[0]?.[1]))).toContain("typed in the terminal");
     });
 
     it("stays silent about input the bot itself sent", async () => {

@@ -4,6 +4,7 @@ import { taskListCommand } from "../../../src/bot/commands/tasklist-command.js";
 import { handleTaskListCallback } from "../../../src/bot/callbacks/scheduled-task-callback-handler.js";
 import { interactionManager } from "../../../src/app/managers/interaction-manager.js";
 import { t } from "../../../src/i18n/index.js";
+import { defined } from "../../helpers/defined.js";
 
 const mocked = vi.hoisted(() => ({
   listScheduledTasksMock: vi.fn(),
@@ -116,7 +117,7 @@ describe("bot/commands/tasklist", () => {
 
     expect(ctx.reply).toHaveBeenCalledTimes(1);
 
-    const [, options] = (ctx.reply as ReturnType<typeof vi.fn>).mock.calls[0] as [
+    const [, options] = defined((ctx.reply as ReturnType<typeof vi.fn>).mock.calls[0]) as [
       string,
       { reply_markup: { inline_keyboard: Array<Array<{ text: string; callback_data?: string }>> } },
     ];
@@ -166,7 +167,7 @@ describe("bot/commands/tasklist", () => {
     expect(handled).toBe(true);
     expect(ctx.editMessageText).toHaveBeenCalledTimes(1);
 
-    const [text] = (ctx.editMessageText as ReturnType<typeof vi.fn>).mock.calls[0] as [string];
+    const [text] = defined((ctx.editMessageText as ReturnType<typeof vi.fn>).mock.calls[0]) as [string];
     expect(text).toContain("Check weather forecast");
     expect(text).toContain("D:\\Projects\\RepoA");
     expect(text).toContain("🛠️ Build");
@@ -278,7 +279,7 @@ describe("bot/commands/tasklist", () => {
     const ctx = createCallbackContext("tasklist:open:task-long", 700);
     await handleTaskListCallback(ctx);
 
-    const [text] = (ctx.editMessageText as ReturnType<typeof vi.fn>).mock.calls[0] as [string];
+    const [text] = defined((ctx.editMessageText as ReturnType<typeof vi.fn>).mock.calls[0]) as [string];
     expect(text).toContain("...");
     expect(Buffer.byteLength(text, "utf-8")).toBeLessThanOrEqual(4096);
   });
@@ -304,7 +305,7 @@ describe("bot/commands/tasklist", () => {
     const ctx = createCallbackContext("tasklist:open:task-short", 800);
     await handleTaskListCallback(ctx);
 
-    const [text] = (ctx.editMessageText as ReturnType<typeof vi.fn>).mock.calls[0] as [string];
+    const [text] = defined((ctx.editMessageText as ReturnType<typeof vi.fn>).mock.calls[0]) as [string];
     expect(text).toContain(shortPrompt);
     expect(text).not.toContain("...");
   });
@@ -331,7 +332,7 @@ describe("bot/commands/tasklist", () => {
     const ctx = createCallbackContext("tasklist:open:task-ar", 900);
     await handleTaskListCallback(ctx);
 
-    const [text] = (ctx.editMessageText as ReturnType<typeof vi.fn>).mock.calls[0] as [string];
+    const [text] = defined((ctx.editMessageText as ReturnType<typeof vi.fn>).mock.calls[0]) as [string];
     expect(text).toContain("...");
     expect(Buffer.byteLength(text, "utf-8")).toBeLessThanOrEqual(4096);
   });

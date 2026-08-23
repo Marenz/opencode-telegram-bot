@@ -102,6 +102,7 @@ vi.mock("../../src/utils/logger.js", () => ({
 }));
 
 import { startBotApp } from "../../src/app/bootstrap/start-bot-app.js";
+import { defined } from "../helpers/defined.js";
 
 function createBot() {
   return {
@@ -350,8 +351,8 @@ describe("app/start-bot-app", () => {
     });
 
     expect(mocked.flushLoggerMock).toHaveBeenCalledTimes(1);
-    expect(mocked.flushLoggerMock.mock.invocationCallOrder[0]).toBeGreaterThan(
-      mocked.flushSettingsMock.mock.invocationCallOrder[0],
+    expect(defined(mocked.flushLoggerMock.mock.invocationCallOrder[0])).toBeGreaterThan(
+      defined(mocked.flushSettingsMock.mock.invocationCallOrder[0]),
     );
 
     releaseStart();
@@ -369,8 +370,8 @@ describe("app/start-bot-app", () => {
     expect(mocked.loggerWarnMock).toHaveBeenCalledWith(expect.stringContaining("forcing exit"));
     expect(mocked.flushSettingsMock).toHaveBeenCalledTimes(1);
     expect(mocked.flushLoggerMock).toHaveBeenCalledTimes(1);
-    expect(mocked.flushLoggerMock.mock.invocationCallOrder[0]).toBeGreaterThan(
-      mocked.flushSettingsMock.mock.invocationCallOrder[0],
+    expect(defined(mocked.flushLoggerMock.mock.invocationCallOrder[0])).toBeGreaterThan(
+      defined(mocked.flushSettingsMock.mock.invocationCallOrder[0]),
     );
     expect(processExitSpy).toHaveBeenCalledWith(0);
 
@@ -400,8 +401,8 @@ describe("app/start-bot-app", () => {
     await startBotApp();
 
     expect(mocked.flushSettingsMock).toHaveBeenCalledTimes(1);
-    expect(mocked.flushSettingsMock.mock.invocationCallOrder[0]).toBeGreaterThan(
-      mocked.scheduledTaskShutdownMock.mock.invocationCallOrder[0],
+    expect(defined(mocked.flushSettingsMock.mock.invocationCallOrder[0])).toBeGreaterThan(
+      defined(mocked.scheduledTaskShutdownMock.mock.invocationCallOrder[0]),
     );
   });
 });

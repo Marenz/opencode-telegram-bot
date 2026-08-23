@@ -11,6 +11,7 @@ import {
 } from "../../../src/bot/callbacks/message-history-callback-handler.js";
 import { interactionManager } from "../../../src/app/managers/interaction-manager.js";
 import { t } from "../../../src/i18n/index.js";
+import { defined } from "../../helpers/defined.js";
 
 const mocked = vi.hoisted(() => ({
   currentProject: {
@@ -193,7 +194,7 @@ describe("bot/commands/messages", () => {
       directory: "D:\\Projects\\Repo",
     });
 
-    const [, options] = (ctx.reply as ReturnType<typeof vi.fn>).mock.calls[0] as [
+    const [, options] = defined((ctx.reply as ReturnType<typeof vi.fn>).mock.calls[0]) as [
       string,
       { reply_markup: { inline_keyboard: Array<Array<{ callback_data?: string; text: string }>> } },
     ];
@@ -260,7 +261,7 @@ describe("bot/commands/messages", () => {
     const ctx = createCommandContext(202);
     await messagesCommand(ctx as never);
 
-    const [, options] = (ctx.reply as ReturnType<typeof vi.fn>).mock.calls[0] as [
+    const [, options] = defined((ctx.reply as ReturnType<typeof vi.fn>).mock.calls[0]) as [
       string,
       { reply_markup: { inline_keyboard: Array<Array<{ callback_data?: string; text: string }>> } },
     ];
@@ -302,7 +303,7 @@ describe("bot/commands/messages", () => {
     const handled = await handleMessagesCallback(ctx, testDeps);
 
     expect(handled).toBe(true);
-    const [text, options] = (ctx.editMessageText as ReturnType<typeof vi.fn>).mock.calls[0] as [
+    const [text, options] = defined((ctx.editMessageText as ReturnType<typeof vi.fn>).mock.calls[0]) as [
       string,
       { reply_markup: { inline_keyboard: Array<Array<{ callback_data?: string; text: string }>> } },
     ];
@@ -332,7 +333,7 @@ describe("bot/commands/messages", () => {
     const handled = await handleMessagesCallback(ctx, testDeps);
 
     expect(handled).toBe(true);
-    const [text, options] = (ctx.editMessageText as ReturnType<typeof vi.fn>).mock.calls[0] as [
+    const [text, options] = defined((ctx.editMessageText as ReturnType<typeof vi.fn>).mock.calls[0]) as [
       string,
       { reply_markup: { inline_keyboard: Array<Array<{ callback_data?: string; text: string }>> } },
     ];
@@ -458,7 +459,6 @@ describe("bot/commands/messages", () => {
     });
     expect(ctx.editMessageText).toHaveBeenCalledWith(
       t("messages.revert_success", { text: "test prompt" }),
-      { reply_markup: undefined },
     );
     expect(interactionManager.getSnapshot()).toBeNull();
   });
@@ -492,9 +492,7 @@ describe("bot/commands/messages", () => {
       directory: "D:\\Projects\\Repo",
       messageID: "msg-1",
     });
-    expect(ctx.editMessageText).toHaveBeenCalledWith(t("messages.revert_error"), {
-      reply_markup: undefined,
-    });
+    expect(ctx.editMessageText).toHaveBeenCalledWith(t("messages.revert_error"));
     expect(interactionManager.getSnapshot()).toBeNull();
   });
 
@@ -575,7 +573,6 @@ describe("bot/commands/messages", () => {
     expect(mocked.attachToSessionMock).toHaveBeenCalled();
     expect(ctx.editMessageText).toHaveBeenCalledWith(
       t("messages.fork_success", { text: "test prompt" }),
-      { reply_markup: undefined },
     );
     expect(interactionManager.getSnapshot()).toBeNull();
   });
@@ -609,9 +606,7 @@ describe("bot/commands/messages", () => {
       messageID: "msg-1",
       directory: "D:\\Projects\\Repo",
     });
-    expect(ctx.editMessageText).toHaveBeenCalledWith(t("messages.fork_error"), {
-      reply_markup: undefined,
-    });
+    expect(ctx.editMessageText).toHaveBeenCalledWith(t("messages.fork_error"));
     expect(interactionManager.getSnapshot()).toBeNull();
   });
 

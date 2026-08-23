@@ -12,6 +12,7 @@ import {
   isScanError,
   MAX_ENTRIES_PER_PAGE,
 } from "../../../src/app/services/file-browser-service.js";
+import { defined } from "../../helpers/defined.js";
 
 vi.mock("../../../src/utils/logger.js", () => ({
   logger: { debug: vi.fn(), info: vi.fn(), warn: vi.fn(), error: vi.fn() },
@@ -63,9 +64,9 @@ describe("file-tree", () => {
       if (isScanError(result)) return;
 
       expect(result.entries).toHaveLength(3);
-      expect(result.entries[0].name).toBe("alpha");
-      expect(result.entries[1].name).toBe("bravo");
-      expect(result.entries[2].name).toBe("charlie");
+      expect(defined(result.entries[0]).name).toBe("alpha");
+      expect(defined(result.entries[1]).name).toBe("bravo");
+      expect(defined(result.entries[2]).name).toBe("charlie");
       expect(result.totalCount).toBe(3);
     });
 
@@ -78,7 +79,7 @@ describe("file-tree", () => {
       if (isScanError(result)) return;
 
       expect(result.entries).toHaveLength(1);
-      expect(result.entries[0].name).toBe("visible");
+      expect(defined(result.entries[0]).name).toBe("visible");
     });
 
     it("should skip files (only list directories)", async () => {
@@ -90,7 +91,7 @@ describe("file-tree", () => {
       if (isScanError(result)) return;
 
       expect(result.entries).toHaveLength(1);
-      expect(result.entries[0].name).toBe("subdir");
+      expect(defined(result.entries[0]).name).toBe("subdir");
     });
 
     it("should paginate entries", async () => {
