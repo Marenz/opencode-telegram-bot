@@ -10,9 +10,9 @@ interface SendMessageWithMarkdownFallbackParams {
   api: SendMessageApi;
   chatId: Parameters<SendMessageApi["sendMessage"]>[0];
   text: string;
-  rawFallbackText?: string;
-  options?: TelegramSendMessageOptions;
-  parseMode?: "Markdown" | "MarkdownV2";
+  rawFallbackText?: string | undefined;
+  options?: TelegramSendMessageOptions | undefined;
+  parseMode?: "Markdown" | "MarkdownV2" | undefined;
 }
 
 interface EditMessageWithMarkdownFallbackParams {
@@ -20,9 +20,9 @@ interface EditMessageWithMarkdownFallbackParams {
   chatId: Parameters<EditMessageApi["editMessageText"]>[0];
   messageId: Parameters<EditMessageApi["editMessageText"]>[1];
   text: string;
-  rawFallbackText?: string;
-  options?: TelegramEditMessageOptions;
-  parseMode?: "Markdown" | "MarkdownV2";
+  rawFallbackText?: string | undefined;
+  options?: TelegramEditMessageOptions | undefined;
+  parseMode?: "Markdown" | "MarkdownV2" | undefined;
 }
 
 const MARKDOWN_PARSE_ERROR_MARKERS = [

@@ -13,6 +13,7 @@ import {
 } from "../../../src/bot/menus/command-catalog-menu.js";
 import { interactionManager } from "../../../src/app/managers/interaction-manager.js";
 import { t } from "../../../src/i18n/index.js";
+import { defined } from "../../helpers/defined.js";
 import { foregroundSessionState } from "../../../src/app/managers/foreground-session-state-manager.js";
 
 const mocked = vi.hoisted(() => ({
@@ -251,7 +252,7 @@ describe("bot/commands/commands", () => {
     expect(mocked.commandListMock).toHaveBeenCalledWith({ directory: "D:/Projects/Repo" });
     expect(ctx.reply).toHaveBeenCalledTimes(1);
 
-    const [, options] = (ctx.reply as ReturnType<typeof vi.fn>).mock.calls[0] as [
+    const [, options] = defined((ctx.reply as ReturnType<typeof vi.fn>).mock.calls[0]) as [
       string,
       { reply_markup: { inline_keyboard: Array<Array<{ callback_data?: string }>> } },
     ];
@@ -427,7 +428,7 @@ describe("bot/commands/commands", () => {
 
     expect(mocked.commandListMock).toHaveBeenCalledWith({ directory: "D:/Projects/Repo" });
 
-    const [, options] = (ctx.reply as ReturnType<typeof vi.fn>).mock.calls[0] as [
+    const [, options] = defined((ctx.reply as ReturnType<typeof vi.fn>).mock.calls[0]) as [
       string,
       { reply_markup: { inline_keyboard: Array<Array<{ callback_data?: string; text: string }>> } },
     ];
@@ -458,7 +459,7 @@ describe("bot/commands/commands", () => {
 
     expect(ctx.reply).toHaveBeenCalledTimes(1);
 
-    const [, options] = (ctx.reply as ReturnType<typeof vi.fn>).mock.calls[0] as [
+    const [, options] = defined((ctx.reply as ReturnType<typeof vi.fn>).mock.calls[0]) as [
       string,
       { reply_markup: { inline_keyboard: Array<Array<{ callback_data?: string }>> } },
     ];
@@ -502,7 +503,7 @@ describe("bot/commands/commands", () => {
     expect(handled).toBe(true);
     expect(ctx.editMessageText).toHaveBeenCalledTimes(1);
 
-    const [text, options] = (ctx.editMessageText as ReturnType<typeof vi.fn>).mock.calls[0] as [
+    const [text, options] = defined((ctx.editMessageText as ReturnType<typeof vi.fn>).mock.calls[0]) as [
       string,
       { reply_markup: { inline_keyboard: Array<Array<{ callback_data?: string; text: string }>> } },
     ];

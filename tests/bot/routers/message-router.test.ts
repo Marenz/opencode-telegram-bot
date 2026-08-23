@@ -4,6 +4,7 @@ import { QUEUED_PROMPT_BUTTON_TEXT_PATTERN } from "../../../src/bot/message-patt
 import { promptQueue } from "../../../src/app/managers/prompt-queue-manager.js";
 import { interactionManager } from "../../../src/app/managers/interaction-manager.js";
 import { t } from "../../../src/i18n/index.js";
+import { defined } from "../../helpers/defined.js";
 
 describe("bot/routers/message-router", () => {
   it("registers reply keyboard, media, and text routes", () => {
@@ -19,7 +20,7 @@ describe("bot/routers/message-router", () => {
 
     expect(bot.hears).toHaveBeenCalledTimes(5);
     // The queued prompt route must win over the other reply keyboard routes.
-    expect(bot.hears.mock.calls[0][0]).toBe(QUEUED_PROMPT_BUTTON_TEXT_PATTERN);
+    expect(defined(bot.hears.mock.calls[0]?.[0])).toBe(QUEUED_PROMPT_BUTTON_TEXT_PATTERN);
     expect(bot.on.mock.calls.map(([event]) => event)).toEqual([
       "message:text",
       "message:text",
@@ -41,7 +42,7 @@ describe("bot/routers/message-router", () => {
         setTelegramContext: vi.fn(),
       });
 
-      return bot.hears.mock.calls[0][1] as (ctx: unknown, next: () => Promise<void>) => Promise<void>;
+      return defined(bot.hears.mock.calls[0]?.[1]) as (ctx: unknown, next: () => Promise<void>) => Promise<void>;
     }
 
     function makeButtonContext(text: string) {

@@ -8,6 +8,7 @@ import {
   isTextFileName,
   isTextMimeType,
 } from "../../../src/app/services/file-download-service.js";
+import { defined } from "../../helpers/defined.js";
 
 const nodeFetchMock = vi.hoisted(() => vi.fn());
 
@@ -228,7 +229,8 @@ describe("downloadTelegramFile reverse-proxy wiring", () => {
     const { downloadTelegramFile } = await loadDownloadModule();
     await downloadTelegramFile(makeApiStub(), "fid");
 
-    const [url] = fetchMock.mock.calls[0];
+    const call = defined(fetchMock.mock.calls[0]);
+    const [url] = call;
     expect(url).toBe("https://api.telegram.org/file/botbot-token-xyz/voice/sample.ogg");
   });
 
@@ -240,7 +242,8 @@ describe("downloadTelegramFile reverse-proxy wiring", () => {
     const { downloadTelegramFile } = await loadDownloadModule();
     await downloadTelegramFile(makeApiStub(), "fid");
 
-    const [url] = fetchMock.mock.calls[0];
+    const call = defined(fetchMock.mock.calls[0]);
+    const [url] = call;
     expect(url).toBe("https://tg-proxy.example.com/file/botbot-token-xyz/voice/sample.ogg");
   });
 
@@ -252,7 +255,8 @@ describe("downloadTelegramFile reverse-proxy wiring", () => {
     const { downloadTelegramFile } = await loadDownloadModule();
     await downloadTelegramFile(makeApiStub(), "fid");
 
-    const [url] = fetchMock.mock.calls[0];
+    const call = defined(fetchMock.mock.calls[0]);
+    const [url] = call;
     expect(url).toBe("https://tg-proxy.example.com/file/botbot-token-xyz/voice/sample.ogg");
   });
 
@@ -264,7 +268,8 @@ describe("downloadTelegramFile reverse-proxy wiring", () => {
     const { downloadTelegramFile } = await loadDownloadModule();
     await downloadTelegramFile(makeApiStub(), "fid");
 
-    const [, init] = fetchMock.mock.calls[0];
+    const call = defined(fetchMock.mock.calls[0]);
+    const [, init] = call;
     const headers = (init as { headers?: Record<string, string> } | undefined)?.headers;
     expect(headers?.["X-Proxy-Secret"]).toBeUndefined();
   });
@@ -278,7 +283,8 @@ describe("downloadTelegramFile reverse-proxy wiring", () => {
     const { downloadTelegramFile } = await loadDownloadModule();
     await downloadTelegramFile(makeApiStub(), "fid");
 
-    const [, init] = fetchMock.mock.calls[0];
+    const call = defined(fetchMock.mock.calls[0]);
+    const [, init] = call;
     const headers = (init as { headers?: Record<string, string> } | undefined)?.headers;
     expect(headers?.["X-Proxy-Secret"]).toBe("secret-abc");
   });
@@ -290,7 +296,8 @@ describe("downloadTelegramFile reverse-proxy wiring", () => {
     const { downloadTelegramFile } = await loadDownloadModule();
     await downloadTelegramFile(makeApiStub(), "fid");
 
-    const [, init] = fetchMock.mock.calls[0];
+    const call = defined(fetchMock.mock.calls[0]);
+    const [, init] = call;
     expect((init as { agent?: unknown } | undefined)?.agent).toBeUndefined();
   });
 
@@ -302,7 +309,8 @@ describe("downloadTelegramFile reverse-proxy wiring", () => {
     const { downloadTelegramFile } = await loadDownloadModule();
     await downloadTelegramFile(makeApiStub(), "fid");
 
-    const [, init] = fetchMock.mock.calls[0];
+    const call = defined(fetchMock.mock.calls[0]);
+    const [, init] = call;
     const agent = (init as { agent?: unknown } | undefined)?.agent;
     expect(agent).toBeInstanceOf(HttpsAgent);
     expect((agent as HttpsAgent).options.family).toBe(4);

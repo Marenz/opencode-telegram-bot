@@ -8,6 +8,7 @@ import {
 } from "../../../src/bot/menus/inline-menu.js";
 import { handleInlineMenuCancel } from "../../../src/bot/callbacks/inline-menu-cancel-callback-handler.js";
 import { t } from "../../../src/i18n/index.js";
+import { defined } from "../../helpers/defined.js";
 
 function createReplyContext(messageId: number = 1): Context {
   return {
@@ -52,10 +53,10 @@ describe("bot/menus/inline-menu", () => {
     appendInlineMenuCancelButton(keyboard, "project");
 
     const rows = keyboard.inline_keyboard;
-    const lastRow = rows[rows.length - 1];
+    const lastRow = defined(rows[rows.length - 1]);
 
-    expect(lastRow[0]?.text).toBe(t("inline.button.cancel"));
-    expect(getCallbackData(lastRow[0])).toBe("inline:cancel:project");
+    expect(defined(lastRow[0]).text).toBe(t("inline.button.cancel"));
+    expect(getCallbackData(defined(lastRow[0]))).toBe("inline:cancel:project");
   });
 
   it("uses close label for settings menu", () => {
@@ -64,10 +65,10 @@ describe("bot/menus/inline-menu", () => {
     appendInlineMenuCancelButton(keyboard, "settings");
 
     const rows = keyboard.inline_keyboard;
-    const lastRow = rows[rows.length - 1];
+    const lastRow = defined(rows[rows.length - 1]);
 
-    expect(lastRow[0]?.text).toBe(t("inline.button.close"));
-    expect(getCallbackData(lastRow[0])).toBe("inline:cancel:settings");
+    expect(defined(lastRow[0]).text).toBe(t("inline.button.close"));
+    expect(getCallbackData(defined(lastRow[0]))).toBe("inline:cancel:settings");
   });
 
   it("does not create empty rows when keyboard already has trailing row separator", () => {
@@ -97,11 +98,12 @@ describe("bot/menus/inline-menu", () => {
 
     expect(ctx.reply).toHaveBeenCalledTimes(1);
 
-    const [, options] = (ctx.reply as ReturnType<typeof vi.fn>).mock.calls[0];
+    const call = defined((ctx.reply as ReturnType<typeof vi.fn>).mock.calls[0]);
+    const [, options] = call;
     const replyMarkup = options.reply_markup as InlineKeyboard;
-    const lastRow = replyMarkup.inline_keyboard[replyMarkup.inline_keyboard.length - 1];
+    const lastRow = defined(replyMarkup.inline_keyboard[replyMarkup.inline_keyboard.length - 1]);
 
-    expect(getCallbackData(lastRow[0])).toBe("inline:cancel:model");
+    expect(getCallbackData(defined(lastRow[0]))).toBe("inline:cancel:model");
 
     const state = interactionManager.getSnapshot();
     expect(state?.kind).toBe("inline");

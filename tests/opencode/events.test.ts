@@ -25,6 +25,7 @@ import {
   subscribeToEvents,
 } from "../../src/opencode/events.js";
 import { logger } from "../../src/utils/logger.js";
+import { defined } from "../helpers/defined.js";
 
 function createStream<T>(events: T[]): AsyncGenerator<T, void, unknown> {
   return (async function* () {
@@ -112,8 +113,8 @@ describe("opencode/events", () => {
       expect.objectContaining({ signal: expect.any(AbortSignal) }),
     );
     expect(callback).toHaveBeenCalledTimes(2);
-    expect(callback.mock.calls[0][0]).toEqual(eventA);
-    expect(callback.mock.calls[1][0]).toEqual(eventB);
+    expect(defined(callback.mock.calls[0]?.[0])).toEqual(eventA);
+    expect(defined(callback.mock.calls[1]?.[0])).toEqual(eventB);
   });
 
   it("logs callback errors without failing event delivery", async () => {

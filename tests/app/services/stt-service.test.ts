@@ -42,6 +42,7 @@ vi.mock("../../../src/config.js", () => ({
 }));
 
 import { isSttConfigured, transcribeAudio } from "../../../src/app/services/stt-service.js";
+import { defined } from "../../helpers/defined.js";
 
 describe("isSttConfigured", () => {
   beforeEach(() => {
@@ -105,7 +106,8 @@ describe("transcribeAudio", () => {
     expect(result).toEqual({ text: "Hello world" });
 
     expect(fetchSpy).toHaveBeenCalledOnce();
-    const [url, options] = fetchSpy.mock.calls[0];
+    const call = defined(fetchSpy.mock.calls[0]);
+    const [url, options] = call;
     expect(url).toBe("https://api.groq.com/openai/v1/audio/transcriptions");
     expect(options?.method).toBe("POST");
     expect((options?.headers as Record<string, string>)["Authorization"]).toBe(
@@ -127,7 +129,7 @@ describe("transcribeAudio", () => {
     const audioBuffer = Buffer.from("fake-audio-data");
     await transcribeAudio(audioBuffer, "voice.oga");
 
-    const formData = fetchSpy.mock.calls[0][1]?.body as FormData;
+    const formData = defined(fetchSpy.mock.calls[0]?.[1])?.body as FormData;
     expect(formData.get("language")).toBe("en");
     expect(formData.get("model")).toBe("whisper-large-v3-turbo");
     expect(formData.get("response_format")).toBe("json");
@@ -146,7 +148,7 @@ describe("transcribeAudio", () => {
     const audioBuffer = Buffer.from("fake-audio-data");
     await transcribeAudio(audioBuffer, "voice.oga");
 
-    const formData = fetchSpy.mock.calls[0][1]?.body as FormData;
+    const formData = defined(fetchSpy.mock.calls[0]?.[1])?.body as FormData;
     expect(formData.get("language")).toBeNull();
   });
 
@@ -194,7 +196,8 @@ describe("transcribeAudio", () => {
     expect(result).toEqual({ text: "Hello world" });
 
     expect(fetchSpy).toHaveBeenCalledOnce();
-    const [url, options] = fetchSpy.mock.calls[0];
+    const call = defined(fetchSpy.mock.calls[0]);
+    const [url, options] = call;
     expect(url).toBe("https://api.groq.com/openai/v1/audio/transcriptions");
     expect(options?.method).toBe("POST");
     const headers = options?.headers as Record<string, string>;
@@ -225,7 +228,7 @@ describe("transcribeAudio", () => {
 
     await transcribeAudio(Buffer.from("fake-audio-data"), "voice.mp3");
 
-    const parsedBody = JSON.parse(fetchSpy.mock.calls[0][1]?.body as string) as {
+    const parsedBody = JSON.parse(defined(fetchSpy.mock.calls[0]?.[1])?.body as string) as {
       input_audio: { format: string };
       language: string;
     };

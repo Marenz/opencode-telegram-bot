@@ -133,7 +133,11 @@ function getRetryAfterMs(error: unknown): number | null {
     return null;
   }
 
-  const seconds = Number.parseInt(retryMatch[1], 10);
+  const secondsText = retryMatch[1];
+  if (!secondsText) {
+    return null;
+  }
+  const seconds = Number.parseInt(secondsText, 10);
   if (!Number.isFinite(seconds) || seconds <= 0) {
     return null;
   }
@@ -531,6 +535,9 @@ export class ResponseStreamer {
   ): Promise<void> {
     for (let index = 0; index < payload.parts.length; index++) {
       const part = payload.parts[index];
+      if (!part) {
+        continue;
+      }
       const nextSignature = targetSignatures[index];
       const currentMessageId = state.telegramMessageIds[index];
 

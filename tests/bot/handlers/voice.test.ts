@@ -3,6 +3,7 @@ import { EventEmitter } from "node:events";
 import type { Context } from "grammy";
 import type { VoiceMessageDeps } from "../../../src/bot/handlers/voice-handler.js";
 import { t } from "../../../src/i18n/index.js";
+import { defined } from "../../helpers/defined.js";
 
 const mocked = vi.hoisted(() => ({
   getTtsModeMock: vi.fn(),
@@ -280,7 +281,8 @@ describe("bot/handlers/voice-handler", () => {
 
     await handleVoiceMessage(ctx, deps);
 
-    const [url] = httpsGetMock.mock.calls[0];
+    const call = defined(httpsGetMock.mock.calls[0]);
+    const [url] = call;
     expect(String(url)).toBe(
       "https://api.telegram.org/file/bottest-telegram-token/voice/file_123.oga",
     );
@@ -305,7 +307,8 @@ describe("bot/handlers/voice-handler", () => {
 
     await handleVoiceMessage(ctx, deps);
 
-    const [url] = httpsGetMock.mock.calls[0];
+    const call = defined(httpsGetMock.mock.calls[0]);
+    const [url] = call;
     expect(String(url)).toBe(
       "https://tg-proxy.example.com/file/bottest-telegram-token/voice/file_123.oga",
     );

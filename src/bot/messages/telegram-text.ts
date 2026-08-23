@@ -25,9 +25,9 @@ interface SendBotTextParams {
   api: Pick<Api<RawApi>, "sendMessage">;
   chatId: Parameters<SendMessageApi["sendMessage"]>[0];
   text: string;
-  rawFallbackText?: string;
-  options?: TelegramSendMessageOptions;
-  format?: TelegramTextFormat;
+  rawFallbackText?: string | undefined;
+  options?: TelegramSendMessageOptions | undefined;
+  format?: TelegramTextFormat | undefined;
 }
 
 interface EditBotTextParams {
@@ -35,9 +35,9 @@ interface EditBotTextParams {
   chatId: Parameters<EditMessageApi["editMessageText"]>[0];
   messageId: Parameters<EditMessageApi["editMessageText"]>[1];
   text: string;
-  rawFallbackText?: string;
-  options?: TelegramEditMessageOptions;
-  format?: TelegramTextFormat;
+  rawFallbackText?: string | undefined;
+  options?: TelegramEditMessageOptions | undefined;
+  format?: TelegramTextFormat | undefined;
 }
 
 interface SendRenderedBotPartParams {

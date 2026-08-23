@@ -37,9 +37,12 @@ function normalizeIncomingCommand(text: string): string | null {
   }
 
   const token = trimmed.split(/\s+/)[0];
-  const withoutMention = token.split("@")[0].toLowerCase();
+  if (!token) {
+    return null;
+  }
+  const withoutMention = token.split("@")[0]?.toLowerCase();
 
-  if (withoutMention.length <= 1) {
+  if (!withoutMention || withoutMention.length <= 1) {
     return null;
   }
 

@@ -2,6 +2,7 @@ import { describe, expect, it, vi } from "vitest";
 import type { Context } from "grammy";
 import { helpCommand } from "../../../src/bot/commands/help-command.js";
 import { getLocalizedBotCommands } from "../../../src/bot/commands/definitions.js";
+import { defined } from "../../helpers/defined.js";
 
 describe("bot/commands/help-command", () => {
   it("returns full commands list from centralized definitions", async () => {
@@ -14,7 +15,7 @@ describe("bot/commands/help-command", () => {
 
     expect(replyMock).toHaveBeenCalledTimes(1);
 
-    const helpText = replyMock.mock.calls[0][0] as string;
+    const helpText = defined(replyMock.mock.calls[0]?.[0]) as string;
     const commands = getLocalizedBotCommands();
 
     for (const item of commands) {

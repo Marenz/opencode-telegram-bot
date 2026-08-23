@@ -9,6 +9,7 @@ import { buildBackgroundSessionOpenKeyboard } from "../../../src/bot/menus/sessi
 import { interactionManager } from "../../../src/app/managers/interaction-manager.js";
 import { foregroundSessionState } from "../../../src/app/managers/foreground-session-state-manager.js";
 import { t } from "../../../src/i18n/index.js";
+import { defined } from "../../helpers/defined.js";
 import { safeBackgroundTask } from "../../../src/utils/safe-background-task.js";
 
 const mocked = vi.hoisted(() => ({
@@ -305,7 +306,7 @@ describe("bot/commands/sessions", () => {
     });
     expect(ctx.editMessageText).toHaveBeenCalledTimes(1);
 
-    const [text, options] = (ctx.editMessageText as ReturnType<typeof vi.fn>).mock.calls[0] as [
+    const [text, options] = defined((ctx.editMessageText as ReturnType<typeof vi.fn>).mock.calls[0]) as [
       string,
       { reply_markup: { inline_keyboard: Array<Array<{ callback_data?: string }>> } },
     ];

@@ -8,6 +8,7 @@ import {
   formatToolInfo,
   prepareCodeFile,
 } from "../../../src/app/formatters/summary-formatter.js";
+import { defined } from "../../helpers/defined.js";
 
 const mocked = vi.hoisted(() => ({
   getCurrentProjectMock: vi.fn(),
@@ -37,8 +38,8 @@ describe("bot/messages/summary-message-formatter", () => {
     const longText = "a".repeat(4500);
     const parts = formatSummaryWithMode(longText, "raw");
     expect(parts.length).toBeGreaterThan(1);
-    expect(parts[0].startsWith("```\n")).toBe(true);
-    expect(parts[0].endsWith("\n```")).toBe(true);
+    expect(defined(parts[0]).startsWith("```\n")).toBe(true);
+    expect(defined(parts[0]).endsWith("\n```")).toBe(true);
   });
 
   it("formats markdown summaries for Telegram MarkdownV2 mode", () => {
@@ -52,8 +53,8 @@ describe("bot/messages/summary-message-formatter", () => {
     const parts = formatSummaryWithMode("a".repeat(4500), "markdown");
 
     expect(parts.length).toBeGreaterThan(1);
-    expect(parts[0].startsWith("```\n")).toBe(false);
-    expect(parts[0].endsWith("\n```")).toBe(false);
+    expect(defined(parts[0]).startsWith("```\n")).toBe(false);
+    expect(defined(parts[0]).endsWith("\n```")).toBe(false);
   });
 
   it("supports custom message limits for streamed markdown parts", () => {
@@ -75,8 +76,8 @@ describe("bot/messages/summary-message-formatter", () => {
 
     expect(parts.length).toBeGreaterThan(1);
     expect(parts.every((part) => part.length <= 120)).toBe(true);
-    expect(parts[0].startsWith("```\n")).toBe(true);
-    expect(parts[0].endsWith("\n```")).toBe(true);
+    expect(defined(parts[0]).startsWith("```\n")).toBe(true);
+    expect(defined(parts[0]).endsWith("\n```")).toBe(true);
   });
 
   it("adapts headings, quotes, tables and horizontal rules for Telegram", () => {
@@ -129,7 +130,7 @@ describe("bot/messages/summary-message-formatter", () => {
     const parts = formatSummaryWithMode("*text: *value**", "markdown");
 
     expect(parts).toHaveLength(1);
-    expect(parts[0].length).toBeGreaterThan(0);
+    expect(defined(parts[0]).length).toBeGreaterThan(0);
     expect(parts[0]).toContain("text");
     expect(parts[0]).toContain("value");
   });

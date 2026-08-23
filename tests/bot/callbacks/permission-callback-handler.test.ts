@@ -6,6 +6,7 @@ import { interactionManager } from "../../../src/app/managers/interaction-manage
 import { showPermissionRequest } from "../../../src/bot/menus/permission-menu.js";
 import { handlePermissionCallback } from "../../../src/bot/callbacks/permission-callback-handler.js";
 import { t } from "../../../src/i18n/index.js";
+import { defined } from "../../helpers/defined.js";
 
 const mocked = vi.hoisted(() => ({
   permissionReplyMock: vi.fn(),
@@ -135,7 +136,8 @@ describe("bot permission menu/callbacks", () => {
     await showPermissionRequest(botApi, 777, request);
 
     const sendMessageMock = botApi.sendMessage as unknown as ReturnType<typeof vi.fn>;
-    const [, , options] = sendMessageMock.mock.calls[0];
+    const call = defined(sendMessageMock.mock.calls[0]);
+    const [, , options] = call;
     const replyMarkup = (options as { reply_markup: InlineKeyboard }).reply_markup;
 
     expect(replyMarkup.inline_keyboard).toHaveLength(3);
@@ -338,7 +340,8 @@ describe("bot permission menu/callbacks", () => {
     const editMessageTextMock = botApi.editMessageText as unknown as ReturnType<typeof vi.fn>;
     expect(editMessageTextMock).toHaveBeenCalledTimes(1);
 
-    const [chatId, messageId, text] = editMessageTextMock.mock.calls[0];
+    const call = defined(editMessageTextMock.mock.calls[0]);
+    const [chatId, messageId, text] = call;
     expect(chatId).toBe(777);
     expect(messageId).toBe(651);
     expect(text).toContain(t("permission.grouped_count", { count: 2 }));
@@ -526,7 +529,8 @@ describe("bot permission menu/callbacks", () => {
     );
 
     const sendMessageMock = botApi.sendMessage as unknown as ReturnType<typeof vi.fn>;
-    const [, text, options] = sendMessageMock.mock.calls[0];
+    const call = defined(sendMessageMock.mock.calls[0]);
+    const [, text, options] = call;
 
     expect(text).toContain(t("permission.name.external_directory"));
     expect(text).toContain("• D:/data/my_project");

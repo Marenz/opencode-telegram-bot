@@ -26,8 +26,7 @@ function normalizeCommand(command: string): string | null {
 
   const withSlash = trimmed.startsWith("/") ? trimmed : `/${trimmed}`;
   const withoutMention = withSlash.split("@")[0];
-
-  if (withoutMention.length <= 1) {
+  if (!withoutMention || withoutMention.length <= 1) {
     return null;
   }
 

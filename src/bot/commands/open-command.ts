@@ -20,8 +20,9 @@ export async function openCommand(ctx: CommandContext<Context>): Promise<void> {
     let text: string;
     let keyboard;
 
-    if (roots.length === 1) {
-      const view = await renderOpenBrowseView(roots[0]);
+    const singleRoot = roots[0];
+    if (roots.length === 1 && singleRoot) {
+      const view = await renderOpenBrowseView(singleRoot);
       if ("error" in view) {
         await ctx.reply(t("open.scan_error", { error: view.error }));
         return;

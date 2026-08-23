@@ -4,6 +4,7 @@ import { mcpsCommand } from "../../../src/bot/commands/mcp-catalog-command.js";
 import { handleMcpsCallback } from "../../../src/bot/callbacks/mcp-catalog-callback-handler.js";
 import { interactionManager } from "../../../src/app/managers/interaction-manager.js";
 import { t } from "../../../src/i18n/index.js";
+import { defined } from "../../helpers/defined.js";
 
 const mocked = vi.hoisted(() => ({
   currentProject: {
@@ -110,7 +111,7 @@ describe("bot/commands/mcps", () => {
     expect(mocked.mcpStatusMock).toHaveBeenCalledWith({ directory: "D:/Projects/Repo" });
     expect(ctx.reply).toHaveBeenCalledTimes(1);
 
-    const [, options] = (ctx.reply as ReturnType<typeof vi.fn>).mock.calls[0] as [
+    const [, options] = defined((ctx.reply as ReturnType<typeof vi.fn>).mock.calls[0]) as [
       string,
       { reply_markup: { inline_keyboard: Array<Array<{ callback_data?: string }>> } },
     ];
@@ -341,7 +342,7 @@ describe("bot/commands/mcps", () => {
       expect.objectContaining({ reply_markup: expect.any(Object) }),
     );
 
-    const [, options] = (ctx.editMessageText as ReturnType<typeof vi.fn>).mock.calls[0] as [
+    const [, options] = defined((ctx.editMessageText as ReturnType<typeof vi.fn>).mock.calls[0]) as [
       string,
       { reply_markup: { inline_keyboard: Array<Array<{ callback_data?: string }>> } },
     ];
@@ -365,7 +366,7 @@ describe("bot/commands/mcps", () => {
     const ctx = createCommandContext(850);
     await mcpsCommand(ctx as never);
 
-    const [, options] = (ctx.reply as ReturnType<typeof vi.fn>).mock.calls[0] as [
+    const [, options] = defined((ctx.reply as ReturnType<typeof vi.fn>).mock.calls[0]) as [
       string,
       { reply_markup: { inline_keyboard: Array<Array<{ callback_data?: string }>> } },
     ];

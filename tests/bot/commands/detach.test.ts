@@ -2,6 +2,7 @@ import { beforeEach, describe, expect, it, vi } from "vitest";
 import type { Context } from "grammy";
 import { detachCommand } from "../../../src/bot/commands/detach-command.js";
 import { t } from "../../../src/i18n/index.js";
+import { defined } from "../../helpers/defined.js";
 
 const mocked = vi.hoisted(() => ({
   currentProject: { id: "project-1", worktree: "D:/repo" } as { id: string; worktree: string } | null,
@@ -124,8 +125,8 @@ describe("bot/commands/detach", () => {
     expect(mocked.pinnedRefreshContextLimitMock).toHaveBeenCalledTimes(1);
     expect(mocked.pinnedGetContextLimitMock).toHaveBeenCalledTimes(1);
     expect(mocked.keyboardUpdateContextMock).toHaveBeenCalledWith(0, 200000);
-    expect(mocked.keyboardUpdateContextMock.mock.invocationCallOrder[0]).toBeLessThan(
-      mocked.keyboardGetKeyboardMock.mock.invocationCallOrder[0],
+    expect(defined(mocked.keyboardUpdateContextMock.mock.invocationCallOrder[0])).toBeLessThan(
+      defined(mocked.keyboardGetKeyboardMock.mock.invocationCallOrder[0]),
     );
     expect(ctx.reply).toHaveBeenCalledWith(
       t("detach.success", { title: "Long Run" }),
