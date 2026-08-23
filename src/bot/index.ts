@@ -178,6 +178,7 @@ export function createBot(): Bot<Context> {
 
   registerCommandRouter(bot, {
     ensureEventSubscription: eventSubscriptionService.ensureEventSubscription,
+    clearRuntimeState: (reason) => eventSubscriptionService.clearRuntimeState(reason),
   });
   registerCallbackRouter(bot, {
     ensureEventSubscription: eventSubscriptionService.ensureEventSubscription,

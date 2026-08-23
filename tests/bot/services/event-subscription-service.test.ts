@@ -6,6 +6,7 @@ import type { Bot, Context } from "grammy";
 import type { Event } from "@opencode-ai/sdk/v2";
 import { setRuntimeMode } from "../../../src/runtime/mode.js";
 import { resetSingletonState } from "../../helpers/reset-singleton-state.js";
+import { defined } from "../../helpers/defined.js";
 
 const mocked = vi.hoisted(() => ({
   subscribeToEvents: vi.fn(),
@@ -436,7 +437,7 @@ describe("bot/services/event-subscription-service", () => {
       },
       { timeout: 3000 },
     );
-    expect(api.sendMessage.mock.calls[0][1]).toContain("write");
+    expect(defined(api.sendMessage.mock.calls[0]?.[1])).toContain("write");
     expect(api.sendDocument).not.toHaveBeenCalled();
   });
 
@@ -652,7 +653,7 @@ describe("bot/services/event-subscription-service", () => {
       },
       { timeout: 3000 },
     );
-    expect(api.sendMessage.mock.calls[0][1]).toBe("Final answer");
+    expect(defined(api.sendMessage.mock.calls[0]?.[1])).toBe("Final answer");
   });
 
   it("notifies the final draft response when assistant run footer is disabled", async () => {
@@ -672,8 +673,8 @@ describe("bot/services/event-subscription-service", () => {
       },
       { timeout: 3000 },
     );
-    expect(api.sendMessage.mock.calls[0][1]).toBe("Final answer");
-    expect(api.sendMessage.mock.calls[0][2]?.disable_notification).toBeUndefined();
+    expect(defined(api.sendMessage.mock.calls[0]?.[1])).toBe("Final answer");
+    expect(defined(api.sendMessage.mock.calls[0])[2]?.disable_notification).toBeUndefined();
     expect(api.sendMessageDraft).not.toHaveBeenCalled();
   });
 
@@ -694,9 +695,9 @@ describe("bot/services/event-subscription-service", () => {
       },
       { timeout: 3000 },
     );
-    expect(api.sendMessage.mock.calls[0][1]).toBe("Final answer");
-    expect(api.sendMessage.mock.calls[0][2]).toEqual({ disable_notification: true });
-    expect(api.sendMessage.mock.calls[1][1]).toContain("test-provider/test-model");
+    expect(defined(api.sendMessage.mock.calls[0]?.[1])).toBe("Final answer");
+    expect(defined(api.sendMessage.mock.calls[0])[2]).toEqual({ disable_notification: true });
+    expect(defined(api.sendMessage.mock.calls[1]?.[1])).toContain("test-provider/test-model");
     expect(api.sendMessageDraft).not.toHaveBeenCalled();
   });
 

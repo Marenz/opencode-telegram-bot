@@ -2,22 +2,22 @@ import { logger } from "../../utils/logger.js";
 
 export interface AssistantRunStartInfo {
   startedAt: number;
-  configuredAgent?: string;
-  configuredProviderID?: string;
-  configuredModelID?: string;
+  configuredAgent?: string | undefined;
+  configuredProviderID?: string | undefined;
+  configuredModelID?: string | undefined;
 }
 
 export interface AssistantRunResolvedInfo {
-  agent?: string;
-  providerID?: string;
-  modelID?: string;
+  agent?: string | undefined;
+  providerID?: string | undefined;
+  modelID?: string | undefined;
 }
 
 export interface AssistantRunInfo extends AssistantRunStartInfo {
   sessionId: string;
-  actualAgent?: string;
-  actualProviderID?: string;
-  actualModelID?: string;
+  actualAgent?: string | undefined;
+  actualProviderID?: string | undefined;
+  actualModelID?: string | undefined;
   hasCompletedResponse: boolean;
 }
 

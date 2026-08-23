@@ -549,7 +549,7 @@ export const zh: I18nDictionary = {
   "legacy.models.error": "🔴 加载模型列表时发生错误。",
 
   "stt.recognizing": "🎤 正在识别音频...",
-  "stt.recognized": "🎤 识别结果：\n{text}",
+  "stt.recognized": "🎤 识别结果：",
   "stt.not_configured":
     "🎤 语音识别尚未配置。\n\n在 .env 中设置 STT_API_URL 和 STT_API_KEY 以启用。",
   "stt.error": "🔴 识别音频失败：{error}",

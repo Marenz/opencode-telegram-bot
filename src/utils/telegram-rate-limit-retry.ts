@@ -65,7 +65,11 @@ function getRetryAfterSecondsFromError(error: unknown): number | null {
     return null;
   }
 
-  const parsedSeconds = Number.parseInt(retryMatch[1], 10);
+  const secondsText = retryMatch[1];
+  if (!secondsText) {
+    return null;
+  }
+  const parsedSeconds = Number.parseInt(secondsText, 10);
   if (!Number.isFinite(parsedSeconds) || parsedSeconds <= 0) {
     return null;
   }

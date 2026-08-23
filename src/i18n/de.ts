@@ -623,7 +623,7 @@ export const de: I18nDictionary = {
   "legacy.models.error": "🔴 Beim Laden der Modellliste ist ein Fehler aufgetreten.",
 
   "stt.recognizing": "🎤 Erkenne Audio...",
-  "stt.recognized": "🎤 Erkannt:\n{text}",
+  "stt.recognized": "🎤 Erkannt:",
   "stt.not_configured":
     "🎤 Spracherkennung ist nicht konfiguriert.\n\nSetze STT_API_URL und STT_API_KEY in .env, um sie zu aktivieren.",
   "stt.error": "🔴 Audio konnte nicht erkannt werden: {error}",

@@ -111,7 +111,7 @@ export function resolveSupportedLocale(locale: string | null | undefined): Local
   }
 
   const baseLocale = normalized.split("-")[0];
-  if (Object.hasOwn(localeDefinitionByCode, baseLocale)) {
+  if (baseLocale && Object.hasOwn(localeDefinitionByCode, baseLocale)) {
     return baseLocale as Locale;
   }
 

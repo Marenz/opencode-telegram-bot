@@ -478,7 +478,7 @@ class EventSubscriptionService implements BotEventSubscriptionService {
     return appendDuration(message, formatDuration(durationMs));
   }
 
-  clearRuntimeState(reason: string): void {
+  clearRuntimeState = (reason: string): void => {
     backgroundSessionTracker.clear();
     this.nextDraftId = 1;
     this.clearAllResponseStreams(reason);
@@ -490,7 +490,7 @@ class EventSubscriptionService implements BotEventSubscriptionService {
     this.sessionCompletionTasks.clear();
     this.clearToolElapsedState(null, reason);
     assistantRunState.clearAll(reason);
-  }
+  };
 
   cleanup(reason: string): void {
     stopEventListening();

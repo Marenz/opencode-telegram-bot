@@ -43,7 +43,9 @@ class PinnedMessageManager {
     cost: 0,
   };
   private contextLimit: number | null = null;
-  private onKeyboardUpdateCallback?: (tokensUsed: number, tokensLimit: number) => void;
+  private onKeyboardUpdateCallback?:
+    | ((tokensUsed: number, tokensLimit: number) => void)
+    | undefined;
   private updateDebounceTimer: ReturnType<typeof setTimeout> | null = null;
   private updateTask: Promise<void> | null = null;
   private pendingUpdate = false;
@@ -667,6 +669,8 @@ class PinnedMessageManager {
       const left = current[index];
       const right = next[index];
       if (
+        !left ||
+        !right ||
         left.file !== right.file ||
         left.additions !== right.additions ||
         left.deletions !== right.deletions

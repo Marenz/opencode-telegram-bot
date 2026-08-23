@@ -41,7 +41,7 @@ export interface AttachSessionDeps {
   chatId: number;
   session: SessionInfo;
   ensureEventSubscription: (directory: string) => Promise<void>;
-  forceFullRestore?: boolean;
+  forceFullRestore?: boolean | undefined;
 }
 
 export interface AttachSessionResult {

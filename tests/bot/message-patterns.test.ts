@@ -1,4 +1,5 @@
 import { describe, expect, it } from "vitest";
+import { defined } from "../helpers/defined.js";
 import { createMainKeyboard } from "../../src/bot/keyboards/main-reply-keyboard.js";
 import {
   AGENT_MODE_BUTTON_TEXT_PATTERN,
@@ -20,7 +21,7 @@ describe("bot/message-patterns", () => {
       modelID: "openai/gpt-4o",
     });
 
-    const modelButtonText = getButtonText(keyboard.keyboard[1][0]);
+    const modelButtonText = getButtonText(defined(keyboard.keyboard[1]?.[0]));
     expect(modelButtonText).toMatch(MODEL_BUTTON_TEXT_PATTERN);
   });
 
@@ -38,7 +39,7 @@ describe("bot/message-patterns", () => {
       modelID: "openai/gpt-4o",
     });
 
-    const variantButtonText = getButtonText(keyboard.keyboard[1][1]);
+    const variantButtonText = getButtonText(defined(keyboard.keyboard[1]?.[1]));
     expect(variantButtonText).toMatch(VARIANT_BUTTON_TEXT_PATTERN);
     expect("💭 Default").toMatch(VARIANT_BUTTON_TEXT_PATTERN);
   });
@@ -80,10 +81,10 @@ describe("bot/message-patterns", () => {
       { tokensUsed: 150000, tokensLimit: 1500000 },
     );
 
-    expect(isReplyKeyboardButtonText(getButtonText(keyboard.keyboard[0][0]))).toBe(true);
-    expect(isReplyKeyboardButtonText(getButtonText(keyboard.keyboard[0][1]))).toBe(true);
-    expect(isReplyKeyboardButtonText(getButtonText(keyboard.keyboard[1][0]))).toBe(true);
-    expect(isReplyKeyboardButtonText(getButtonText(keyboard.keyboard[1][1]))).toBe(true);
+    expect(isReplyKeyboardButtonText(getButtonText(defined(keyboard.keyboard[0]?.[0])))).toBe(true);
+    expect(isReplyKeyboardButtonText(getButtonText(defined(keyboard.keyboard[0]?.[1])))).toBe(true);
+    expect(isReplyKeyboardButtonText(getButtonText(defined(keyboard.keyboard[1]?.[0])))).toBe(true);
+    expect(isReplyKeyboardButtonText(getButtonText(defined(keyboard.keyboard[1]?.[1])))).toBe(true);
     expect(isReplyKeyboardButtonText(formatQueuedPromptButtonLabel(1, "queued"))).toBe(true);
     expect(isReplyKeyboardButtonText("Create a migration plan")).toBe(false);
   });

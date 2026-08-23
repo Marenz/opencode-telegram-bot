@@ -152,7 +152,7 @@ opencode-telegram config
 | `/task`           | Create a scheduled task                                 |
 | `/tasklist`       | Browse and delete scheduled tasks                       |
 | `/opencode_start` | Start the local OpenCode server on the bot machine      |
-| `/opencode_stop`  | Stop the local OpenCode server on the bot machine       |
+| `/opencode_stop`  | Stop the local OpenCode server, including during a run  |
 | `/help`           | Show available commands                                 |
 
 Any regular text message is sent as a prompt to the coding agent only when no blocking interaction is active. Voice/audio messages are transcribed and then sent as prompts when STT is configured.

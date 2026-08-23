@@ -606,7 +606,7 @@ export const ko: I18nDictionary = {
   "legacy.models.error": "🔴 모델 목록을 불러오는 중 오류가 발생했습니다.",
 
   "stt.recognizing": "🎤 오디오를 인식하는 중...",
-  "stt.recognized": "🎤 인식 결과:\n{text}",
+  "stt.recognized": "🎤 인식 결과:",
   "stt.not_configured":
     "🎤 음성 인식이 설정되지 않았습니다.\n\n사용하려면 .env에 STT_API_URL과 STT_API_KEY를 설정해 주세요.",
   "stt.error": "🔴 오디오 인식에 실패했습니다: {error}",

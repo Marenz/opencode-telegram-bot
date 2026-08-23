@@ -3,6 +3,7 @@ import { EventEmitter } from "node:events";
 import type { Context } from "grammy";
 import type { VoiceMessageDeps } from "../../../src/bot/handlers/voice-handler.js";
 import { t } from "../../../src/i18n/index.js";
+import { defined } from "../../helpers/defined.js";
 
 const mocked = vi.hoisted(() => ({
   getTtsModeMock: vi.fn(),
@@ -145,6 +146,27 @@ describe("bot/handlers/voice-handler", () => {
     vi.stubEnv("STT_NOTE_PROMPT", "");
   });
 
+  it("edits the status message with quoted recognized text", async () => {
+    const { handleVoiceMessage } = await loadVoiceModule();
+    const { ctx, replyMock, editMessageTextMock } = createVoiceContext();
+    const { deps, processPromptMock } = createVoiceDeps({
+      transcribeAudio: vi.fn().mockResolvedValue({ text: "Line 1\nLine 2" }),
+    });
+
+    await handleVoiceMessage(ctx, deps);
+
+    expect(replyMock).toHaveBeenCalledWith(t("stt.recognizing"));
+    expect(editMessageTextMock).toHaveBeenCalledWith(
+      777,
+      101,
+      "🎤 Recognized:\n> Line 1\n> Line 2",
+      { parse_mode: "MarkdownV2" },
+    );
+    expect(processPromptMock).toHaveBeenCalledWith(ctx, "Line 1\nLine 2", deps, [], {
+      responseMode: "text_only",
+    });
+  });
+
   it("continues with prompt processing when recognized text message edit fails", async () => {
     const { handleVoiceMessage } = await loadVoiceModule();
     const { ctx, replyMock, editMessageTextMock } = createVoiceContext();
@@ -259,7 +281,8 @@ describe("bot/handlers/voice-handler", () => {
 
     await handleVoiceMessage(ctx, deps);
 
-    const [url] = httpsGetMock.mock.calls[0];
+    const call = defined(httpsGetMock.mock.calls[0]);
+    const [url] = call;
     expect(String(url)).toBe(
       "https://api.telegram.org/file/bottest-telegram-token/voice/file_123.oga",
     );
@@ -284,7 +307,8 @@ describe("bot/handlers/voice-handler", () => {
 
     await handleVoiceMessage(ctx, deps);
 
-    const [url] = httpsGetMock.mock.calls[0];
+    const call = defined(httpsGetMock.mock.calls[0]);
+    const [url] = call;
     expect(String(url)).toBe(
       "https://tg-proxy.example.com/file/bottest-telegram-token/voice/file_123.oga",
     );
