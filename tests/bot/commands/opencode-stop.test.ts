@@ -1,4 +1,4 @@
-import { beforeEach, describe, expect, it, vi } from "vitest";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import type { Context } from "grammy";
 import { t } from "../../../src/i18n/index.js";
 
@@ -113,6 +113,22 @@ describe("bot/commands/opencode-stop-command", () => {
     mocked.getBusySessionsMock.mockReturnValue([]);
     mocked.attachGetSnapshotMock.mockReturnValue(null);
     mocked.markAttachedSessionIdleMock.mockResolvedValue(undefined);
+  });
+
+  afterEach(() => {
+    vi.unstubAllEnvs();
+  });
+
+  it("warns when running in a container even if the API URL is local", async () => {
+    const ctx = createContext();
+    vi.stubEnv("OPENCODE_TELEGRAM_CONTAINER", "1");
+
+    await opencodeStopCommand(ctx as never, createDeps());
+
+    expect(ctx.reply).toHaveBeenCalledWith(t("runtime.container.command_unavailable"));
+    expect(mocked.findServerPidMock).not.toHaveBeenCalled();
+    expect(mocked.resolveLocalOpencodeTargetMock).not.toHaveBeenCalled();
+    expect(mocked.clearRuntimeStateMock).not.toHaveBeenCalled();
   });
 
   it("warns when OPENCODE_API_URL points to a remote server", async () => {

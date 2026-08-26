@@ -1,4 +1,4 @@
-import { beforeEach, describe, expect, it, vi } from "vitest";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import type { Context } from "grammy";
 import { t } from "../../../src/i18n/index.js";
 
@@ -18,6 +18,7 @@ const mocked = vi.hoisted(() => ({
 }));
 
 vi.mock("node:fs", () => ({
+  existsSync: () => false,
   promises: {
     readdir: mocked.readdirMock,
     stat: mocked.statMock,
@@ -96,6 +97,10 @@ function createCallbackContext(data: string, messageId: number = 77): Context {
 }
 
 describe("bot/commands/ls", () => {
+  afterEach(() => {
+    vi.unstubAllEnvs();
+  });
+
   beforeEach(() => {
     clearSessionDirectories();
     clearLsPathIndex();
@@ -122,6 +127,16 @@ describe("bot/commands/ls", () => {
     mocked.sendDownloadedFileMock.mockReset().mockResolvedValue(true);
     mocked.loggerDebugMock.mockReset();
     mocked.loggerErrorMock.mockReset();
+  });
+
+  it("warns instead of listing when running in a container", async () => {
+    vi.stubEnv("OPENCODE_TELEGRAM_CONTAINER", "1");
+    const ctx = createCommandContext();
+
+    await lsCommand(ctx as never);
+
+    expect(ctx.reply).toHaveBeenCalledWith(t("runtime.container.command_unavailable"));
+    expect(mocked.readdirMock).not.toHaveBeenCalled();
   });
 
   it("opens an inline browser for the current project", async () => {

@@ -187,5 +187,5 @@ Model picker behavior:
 Open tasks for upcoming iterations:
 
 - [ ] Model search in model switcher
-- [ ] Docker runtime support and deployment guide
+- [x] Docker runtime support and deployment guide
 - [x] Add a bot settings command with in-chat UI

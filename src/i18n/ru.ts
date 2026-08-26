@@ -463,6 +463,8 @@ export const ru: I18nDictionary = {
     "Приложение еще не сконфигурировано. Запускаю wizard...\n",
   "runtime.wizard.tty_required":
     "Интерактивный wizard требует TTY-терминал. Запустите `opencode-telegram config` в интерактивной оболочке.",
+  "runtime.container.command_unavailable":
+    "⚠️ Эта команда недоступна в Docker-образе.",
 
   "rename.no_session": "⚠️ Нет активной сессии. Сначала создайте или выберите сессию.",
   "rename.prompt": "📝 Введите новое название сессии:\n\nТекущее: {title}",

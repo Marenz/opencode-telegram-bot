@@ -1,4 +1,4 @@
-import { describe, it, expect, vi, beforeEach } from "vitest";
+import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
 import type { Context } from "grammy";
 import { t } from "../../../src/i18n/index.js";
 import { defined } from "../../helpers/defined.js";
@@ -134,6 +134,10 @@ function makeScanResult(
 // --- Tests ---
 
 describe("open command", () => {
+  afterEach(() => {
+    vi.unstubAllEnvs();
+  });
+
   beforeEach(() => {
     clearOpenPathIndex();
     // Reset hoisted mocks that need custom return values
@@ -183,6 +187,16 @@ describe("open command", () => {
       await openCommand(ctx as never);
 
       expect(mocked.replyBusyBlockedMock).toHaveBeenCalledWith(ctx);
+      expect(mocked.scanDirectoryMock).not.toHaveBeenCalled();
+    });
+
+    it("should warn instead of browsing when running in a container", async () => {
+      vi.stubEnv("OPENCODE_TELEGRAM_CONTAINER", "1");
+
+      const ctx = createCommandContext();
+      await openCommand(ctx as never);
+
+      expect(ctx.reply).toHaveBeenCalledWith(t("runtime.container.command_unavailable"));
       expect(mocked.scanDirectoryMock).not.toHaveBeenCalled();
     });
 

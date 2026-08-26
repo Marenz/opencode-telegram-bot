@@ -3,6 +3,7 @@ import { getBrowserRoots } from "../../app/services/file-browser-service.js";
 import { interactionManager } from "../../app/managers/interaction-manager.js";
 import { isForegroundBusy } from "../../app/services/run-control-service.js";
 import { t } from "../../i18n/index.js";
+import { isContainerRuntime } from "../../runtime/container.js";
 import { logger } from "../../utils/logger.js";
 import { buildOpenRootsKeyboard, clearOpenPathIndex, renderOpenBrowseView } from "../menus/file-browser-menu.js";
 import { replyBusyBlocked } from "../messages/busy-blocked-renderer.js";
@@ -11,6 +12,11 @@ export async function openCommand(ctx: CommandContext<Context>): Promise<void> {
   try {
     if (isForegroundBusy()) {
       await replyBusyBlocked(ctx);
+      return;
+    }
+
+    if (isContainerRuntime()) {
+      await ctx.reply(t("runtime.container.command_unavailable"));
       return;
     }
 

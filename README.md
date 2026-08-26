@@ -48,6 +48,7 @@ Languages: English (`en`), العربية (`ar`), Deutsch (`de`), Español (`es`
 - **Git worktree switching** — browse and switch between existing git worktrees for the current repository with `/worktree`
 - **Security** — strict user ID whitelist; no one else can access your bot, even if they find it
 - **Localization** — UI localization is supported for multiple languages (`BOT_LOCALE`)
+- **Docker support** — run the bot as a container while OpenCode stays on the host; see [Docker Deployment](#docker-deployment)
 - **Interactive file browser** — use `/ls` to browse files and directories inside the current project, open subdirectories, go back, and download files by tapping them
 - **Attach a file to your next prompt** — tap **📎 Attach to next prompt** on a text file in `/ls`, and it is sent to OpenCode together with your next message, once
 
@@ -437,7 +438,7 @@ npm run dev
 
 ### Docker Deployment
 
-The bot can also be run as a container using Docker and Docker Compose.
+The bot can also be run as a container using Docker and Docker Compose. The image contains **only the Telegram bot**. OpenCode stays on the host and must already be running before you start the container (`opencode serve --port 4096`). `/opencode_start` and `/opencode_stop` do not work from inside the container.
 
 ```bash
 git clone https://github.com/grinev/opencode-telegram-bot.git
@@ -446,10 +447,18 @@ cp .env.example .env
 # Edit .env with your bot token, user ID, and model settings
 ```
 
-Build and start:
+`.env` stays on the host. It is injected at runtime and is not copied into the image.
+
+**Linux** (OpenCode on the host at `127.0.0.1:4096`):
 
 ```bash
 docker compose up -d --build
+```
+
+**macOS / Windows (Docker Desktop):** host networking does not reach OpenCode on the Windows/macOS localhost. Use the Desktop override, which talks to the host via `host.docker.internal`:
+
+```bash
+docker compose -f docker-compose.yml -f docker-compose.desktop.yml up -d --build
 ```
 
 Follow logs:
@@ -466,21 +475,24 @@ docker compose down
 
 #### Persistence
 
-Runtime state (settings, logs, SQLite databases) is stored in a Docker named volume `opencode-bot-data` mapped to `/app/data` inside the container. The volume is created automatically on first run.
+Runtime state (settings, logs, SQLite databases) is stored in a Docker named volume `opencode-bot-data` mapped to `/app/data` inside the container. The volume is created automatically on first run. It is the bot's own state, not your project files. OpenCode on the host continues to edit projects on the host disk.
 
 #### Configuration
 
-All configuration is provided through environment variables in the `.env` file. The most relevant variables for Docker are:
+All configuration is provided through environment variables in the `.env` file. Compose also sets `OPENCODE_TELEGRAM_CONTAINER=1` so the bot can warn about commands that need the host filesystem or a local OpenCode process.
 
-- `OPENCODE_API_URL` — URL of the OpenCode server. Default: `http://127.0.0.1:4096`. If running OpenCode on the Docker host (not in a container), `network_mode: host` allows using `127.0.0.1`. If OpenCode runs elsewhere, set the appropriate host/port.
+- `OPENCODE_API_URL` — URL of the OpenCode server. On Linux with the default compose file this is `http://127.0.0.1:4096` via `network_mode: host`. The Desktop override sets `http://host.docker.internal:4096`.
 
-#### Networking Note
+#### Commands that are not available in Docker
 
-The provided `docker-compose.yml` uses `network_mode: host` because OpenCode by default binds to `127.0.0.1:4096` only. This allows the container to reach the OpenCode server on the host without additional configuration.
+These need the bot process to see host project paths or to spawn/stop `opencode` in the same machine namespace. The default image does neither, so the bot replies with a warning instead of a generic error:
 
-- **Linux**: `network_mode: host` works natively.
-- **macOS/Windows (Docker Desktop 4.34+)**: host networking is supported when enabled in Settings → "Enable host networking".
-- If host networking is not available or not enabled, OpenCode must be configured to listen on `0.0.0.0` or a reachable IP, and `OPENCODE_API_URL` set accordingly.
+- `/open` — directory browser to add a project
+- `/ls` — project file browser / download / attach
+- `/opencode_start` and `/opencode_stop`
+- `/worktree`
+
+`/projects`, `/sessions`, prompts, and live updates still go through the OpenCode HTTP API and work as usual.
 
 Port 4096 is **not** exposed by the bot image; it belongs to the OpenCode server, which runs separately.
 

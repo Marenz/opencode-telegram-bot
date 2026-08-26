@@ -1,4 +1,4 @@
-import { beforeEach, describe, expect, it, vi } from "vitest";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import type { Context } from "grammy";
 import { t } from "../../../src/i18n/index.js";
 
@@ -89,6 +89,10 @@ function createCallbackContext(data: string, messageId: number = 42): Context {
 }
 
 describe("bot/commands/worktree", () => {
+  afterEach(() => {
+    vi.unstubAllEnvs();
+  });
+
   beforeEach(() => {
     mocked.currentProject = { id: "project-1", worktree: "/repo", name: "Repo" };
     mocked.getGitWorktreeContextMock.mockReset();
@@ -104,6 +108,15 @@ describe("bot/commands/worktree", () => {
     });
     mocked.switchToProjectMock.mockReset().mockResolvedValue({ inline_keyboard: [] });
     mocked.clearAllInteractionStateMock.mockReset();
+  });
+
+  it("warns instead of loading git worktrees when running in a container", async () => {
+    vi.stubEnv("OPENCODE_TELEGRAM_CONTAINER", "1");
+    const ctx = createCommandContext();
+    await worktreeCommand(ctx as never);
+
+    expect(ctx.reply).toHaveBeenCalledWith(t("runtime.container.command_unavailable"));
+    expect(mocked.getGitWorktreeContextMock).not.toHaveBeenCalled();
   });
 
   it("asks to select a project first when no project is active", async () => {

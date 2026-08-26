@@ -471,6 +471,8 @@ export const ko: I18nDictionary = {
     "아직 구성되지 않았습니다. 설정 마법사를 시작합니다...\n",
   "runtime.wizard.tty_required":
     "대화형 마법사에는 TTY 터미널이 필요합니다. 대화형 셸에서 `opencode-telegram config`를 실행해 주세요.",
+  "runtime.container.command_unavailable":
+    "⚠️ 이 명령은 Docker 이미지에서 사용할 수 없습니다.",
 
   "rename.no_session": "⚠️ 활성 세션이 없습니다. 먼저 세션을 만들거나 선택해 주세요.",
   "rename.prompt": "📝 세션의 새 제목을 입력하세요:\n\n현재: {title}",

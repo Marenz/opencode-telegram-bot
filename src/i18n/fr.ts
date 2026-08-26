@@ -484,6 +484,8 @@ export const fr: I18nDictionary = {
     "L'application n'est pas encore configurée. Lancement de l'assistant...\n",
   "runtime.wizard.tty_required":
     "L'assistant interactif nécessite un terminal TTY. Exécutez `opencode-telegram config` dans un shell interactif.",
+  "runtime.container.command_unavailable":
+    "⚠️ Cette commande n'est pas disponible dans l'image Docker.",
 
   "rename.no_session": "⚠️ Aucune session active. Créez ou sélectionnez d'abord une session.",
   "rename.prompt": "📝 Entrez le nouveau titre de la session :\n\nActuel : {title}",

@@ -461,6 +461,8 @@ export const en = {
     "Application is not configured yet. Starting wizard...\n",
   "runtime.wizard.tty_required":
     "Interactive wizard requires a TTY terminal. Run `opencode-telegram config` in an interactive shell.",
+  "runtime.container.command_unavailable":
+    "⚠️ This command is not available in the Docker image.",
 
   "rename.no_session": "⚠️ No active session. Create or select a session first.",
   "rename.prompt": "📝 Enter new title for session:\n\nCurrent: {title}",
