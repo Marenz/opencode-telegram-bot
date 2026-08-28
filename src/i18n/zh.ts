@@ -369,6 +369,7 @@ export const zh: I18nDictionary = {
   "keyboard.queued_prompt": "❌ {index}. {text}",
   "queue.added": "📥 已加入队列（{count}/{max}）。当前任务完成后将自动发送。",
   "queue.full": "⚠️ 队列已满（{max}）。请删除一条消息或等待当前任务完成。",
+  "queue.media_limit": "⚠️ 队列媒体总大小限制为 {maxSizeMb} MB。请等待一个项目发送后重试。",
   "queue.removed": "🗑 消息已从队列中移除。",
   "queue.not_found": "该消息已不在队列中。",
   "queue.disabled_hint": "可在 /settings 中开启消息队列。",

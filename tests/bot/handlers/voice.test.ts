@@ -7,11 +7,13 @@ import { defined } from "../../helpers/defined.js";
 
 const mocked = vi.hoisted(() => ({
   getTtsModeMock: vi.fn(),
+  getPromptQueueEnabledMock: vi.fn(),
   flushPendingPromptMock: vi.fn(),
 }));
 
 vi.mock("../../../src/app/stores/settings-store.js", () => ({
   getTtsMode: mocked.getTtsModeMock,
+  getPromptQueueEnabled: mocked.getPromptQueueEnabledMock,
 }));
 
 vi.mock("../../../src/utils/logger.js", () => ({
@@ -138,6 +140,7 @@ describe("bot/handlers/voice-handler", () => {
   beforeEach(() => {
     vi.clearAllMocks();
     mocked.getTtsModeMock.mockReturnValue("off");
+    mocked.getPromptQueueEnabledMock.mockReturnValue(false);
     vi.doUnmock("node:https");
     vi.stubEnv("TELEGRAM_BOT_TOKEN", "test-telegram-token");
     vi.stubEnv("TELEGRAM_ALLOWED_USER_ID", "123456789");
@@ -166,6 +169,32 @@ describe("bot/handlers/voice-handler", () => {
     expect(processPromptMock).toHaveBeenCalledWith(ctx, "Line 1\nLine 2", deps, [], {
       responseMode: "text_only",
     });
+  });
+
+  it("transcribes and queues a voice message while the agent is busy", async () => {
+    mocked.getPromptQueueEnabledMock.mockReturnValue(true);
+    const { handleVoiceMessage } = await loadVoiceModule();
+    const { foregroundSessionState } = await import(
+      "../../../src/app/managers/foreground-session-state-manager.js"
+    );
+    const { promptQueue } = await import("../../../src/app/managers/prompt-queue-manager.js");
+    foregroundSessionState.__resetForTests();
+    promptQueue.__resetForTests();
+    foregroundSessionState.markBusy("session-1", "/repo");
+    const { ctx } = createVoiceContext();
+    const { deps, processPromptMock, transcribeMock } = createVoiceDeps();
+
+    await handleVoiceMessage(ctx, deps);
+
+    expect(transcribeMock).toHaveBeenCalledTimes(1);
+    expect(processPromptMock).not.toHaveBeenCalled();
+    expect(promptQueue.list()).toEqual([
+      expect.objectContaining({
+        text: "run tests",
+        displayText: "run tests",
+        responseMode: "text_only",
+      }),
+    ]);
   });
 
   it("continues with prompt processing when recognized text message edit fails", async () => {

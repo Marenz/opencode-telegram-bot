@@ -417,6 +417,7 @@ export const it: I18nDictionary = {
   "keyboard.queued_prompt": "❌ {index}. {text}",
   "queue.added": "📥 Aggiunto alla coda ({count}/{max}). Verrà inviato quando l'attività corrente termina.",
   "queue.full": "⚠️ La coda è piena ({max}). Rimuovi un messaggio o attendi che l'attività corrente termini.",
+  "queue.media_limit": "⚠️ I media in coda sono limitati a {maxSizeMb} MB. Attendi l'invio di un elemento e riprova.",
   "queue.removed": "🗑 Messaggio rimosso dalla coda.",
   "queue.not_found": "Questo messaggio non è più in coda.",
   "queue.disabled_hint": "La coda dei messaggi può essere attivata in /settings.",

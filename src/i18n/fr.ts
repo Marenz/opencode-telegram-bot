@@ -422,6 +422,7 @@ export const fr: I18nDictionary = {
   "keyboard.queued_prompt": "❌ {index}. {text}",
   "queue.added":
     "📥 Ajouté à la file d'attente ({count}/{max}). Le message sera envoyé à la fin de la tâche en cours.",
+  "queue.media_limit": "⚠️ Les médias en file sont limités à {maxSizeMb} Mo. Attendez l'envoi d'un élément.",
   "queue.full":
     "⚠️ La file d'attente est pleine ({max}). Supprimez un message ou attendez la fin de la tâche en cours.",
   "queue.removed": "🗑 Message retiré de la file d'attente.",

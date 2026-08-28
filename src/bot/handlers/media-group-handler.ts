@@ -15,6 +15,7 @@ import { processUserPrompt, type ProcessPromptDeps } from "./prompt.js";
 import { createIncomingPrompt, type IncomingPrompt } from "../../app/types/prompt.js";
 import { flushPendingPrompt } from "./message-merger.js";
 import { handleUnsupportedMessages } from "./unsupported-message-handler.js";
+import { tryEnqueuePromptIfBusy } from "./prompt-queue-dispatch.js";
 
 const DEFAULT_MEDIA_GROUP_DEBOUNCE_MS = 1_000;
 
@@ -228,6 +229,18 @@ export class MediaGroupAttachmentHandler {
         `[MediaGroup] Sending media group as one prompt: key=${key}, files=${fileParts.length}, textLength=${promptText.length}`,
       );
 
+      const captions = items
+        .map((item) => item.caption.trim())
+        .filter((caption) => caption.length > 0);
+      if (
+        await tryEnqueuePromptIfBusy(replyCtx, {
+          ...createIncomingPrompt(promptText, { fileParts }),
+          displayText: captions.join(" / ") || `[Album: ${items.length} files]`,
+          fileParts,
+        })
+      ) {
+        return;
+      }
       await processPrompt(replyCtx, createIncomingPrompt(promptText, { fileParts }), this.deps);
     } catch (err) {
       logger.error(`[MediaGroup] Failed to process media group: key=${key}`, err);

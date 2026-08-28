@@ -402,6 +402,7 @@ export const en = {
   "keyboard.queued_prompt": "❌ {index}. {text}",
   "queue.added": "📥 Added to queue ({count}/{max}). It will be sent when the current task finishes.",
   "queue.full": "⚠️ Queue is full ({max}). Remove a message or wait for the current task to finish.",
+  "queue.media_limit": "⚠️ Queued media is limited to {maxSizeMb} MB. Wait for an item to send, then try again.",
   "queue.removed": "🗑 Message removed from the queue.",
   "queue.not_found": "This message is no longer in the queue.",
   "queue.disabled_hint": "The message queue can be enabled in /settings.",

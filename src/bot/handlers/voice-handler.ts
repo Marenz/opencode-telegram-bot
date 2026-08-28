@@ -19,6 +19,7 @@ import { t } from "../../i18n/index.js";
 import { buildTelegramFileUrl } from "../../app/services/file-download-service.js";
 import { buildQuotedNotification } from "../../app/services/quoted-notification.js";
 import { editBotText } from "../messages/telegram-text.js";
+import { tryEnqueuePromptIfBusy } from "./prompt-queue-dispatch.js";
 
 const TELEGRAM_DOWNLOAD_TIMEOUT_MS = 30_000;
 const TELEGRAM_DOWNLOAD_MAX_REDIRECTS = 3;
@@ -259,6 +260,15 @@ export async function handleVoiceMessage(ctx: Context, deps: VoiceMessageDeps): 
     const currentTtsMode = getTtsMode();
     const responseMode =
       currentTtsMode === "all" || currentTtsMode === "auto" ? "text_and_tts" : "text_only";
+    if (
+      await tryEnqueuePromptIfBusy(ctx, {
+        ...createIncomingPrompt(textForLLM),
+        displayText: recognizedText,
+        responseMode,
+      })
+    ) {
+      return;
+    }
     await processPrompt(ctx, createIncomingPrompt(textForLLM), deps, { responseMode });
   } catch (err) {
     const errorMessage = err instanceof Error ? err.message : "unknown error";

@@ -1,5 +1,9 @@
 import type { Context } from "grammy";
-import { MAX_QUEUED_PROMPTS, promptQueue } from "../../app/managers/prompt-queue-manager.js";
+import {
+  MAX_QUEUED_PROMPTS,
+  promptQueue,
+  type QueuedPromptInput,
+} from "../../app/managers/prompt-queue-manager.js";
 import type { IncomingPrompt } from "../../app/types/prompt.js";
 import { buildExternalUserInputNotification } from "../../app/services/external-user-input-service.js";
 import { isForegroundBusy } from "../../app/services/run-control-service.js";
@@ -50,11 +54,20 @@ export function shouldSuggestPromptQueue(input: IncomingPrompt): boolean {
   return !getPromptQueueEnabled() && isQueueablePrompt(input);
 }
 
+export function canQueueMediaPrompt(ctx: Context): boolean {
+  const message = ctx.message;
+  return Boolean(
+    getPromptQueueEnabled() &&
+      message &&
+      (message.voice || message.audio || message.photo?.length || message.document),
+  );
+}
+
 /**
- * Queues a text prompt that arrived while the session was busy.
+ * Queues a prepared prompt that arrived while the session was busy.
  * Returns false when queueing does not apply, so the caller keeps its old behaviour.
  */
-export async function tryEnqueuePrompt(ctx: Context, input: IncomingPrompt): Promise<boolean> {
+export async function tryEnqueuePrompt(ctx: Context, input: QueuedPromptInput): Promise<boolean> {
   if (!getPromptQueueEnabled() || !ctx.chat || !isQueueablePrompt(input)) {
     return false;
   }
@@ -64,6 +77,11 @@ export async function tryEnqueuePrompt(ctx: Context, input: IncomingPrompt): Pro
   if (promptQueue.isFull()) {
     logger.info(`[PromptQueue] Rejected prompt: queue is full (max=${MAX_QUEUED_PROMPTS})`);
     await replyWithKeyboard(ctx, t("queue.full", { max: String(MAX_QUEUED_PROMPTS) }));
+    return true;
+  }
+
+  if (!promptQueue.canAcceptMedia(input.mediaBytes ?? 0)) {
+    await replyWithKeyboard(ctx, t("queue.media_limit", { maxSizeMb: "20" }));
     return true;
   }
 
@@ -80,6 +98,13 @@ export async function tryEnqueuePrompt(ctx: Context, input: IncomingPrompt): Pro
     t("queue.added", { count: String(promptQueue.size()), max: String(MAX_QUEUED_PROMPTS) }),
   );
   return true;
+}
+
+export async function tryEnqueuePromptIfBusy(
+  ctx: Context,
+  input: QueuedPromptInput,
+): Promise<boolean> {
+  return isForegroundBusy() && tryEnqueuePrompt(ctx, input);
 }
 
 /**
@@ -108,7 +133,7 @@ export async function dispatchNextQueuedPrompt(): Promise<void> {
     const ctx = queuedPromptContext;
     const deps = promptDeps;
 
-    const notification = buildExternalUserInputNotification(item.text);
+    const notification = buildExternalUserInputNotification(item.displayText);
     if (notification && ctx.chat) {
       try {
         const keyboard = keyboardManager.getKeyboard();
@@ -130,7 +155,9 @@ export async function dispatchNextQueuedPrompt(): Promise<void> {
     );
 
     try {
-      const dispatched = await processUserPrompt(ctx, item, deps);
+      const dispatched = await processUserPrompt(ctx, item, deps, {
+        ...(item.responseMode ? { responseMode: item.responseMode } : {}),
+      });
       if (!dispatched) {
         logger.warn(`[PromptQueue] Queued prompt was not dispatched: id=${item.id}`);
       }

@@ -190,10 +190,18 @@ describe("bot/handlers/prompt-queue-dispatch", () => {
       expect(promptQueue.list().map((item) => item.text)).toEqual(["second"]);
     });
 
-    it("dispatches a queued photo-only rich prompt with its descriptor intact", async () => {
+    it("dispatches queued media with its prepared file parts", async () => {
       const ctx = makeContext();
-      const photo = { fileId: "photo-1", filename: "rich.jpg", source: "rich" as const };
-      await tryEnqueueInput(ctx, createIncomingPrompt("", { photos: [photo] }));
+      const filePart = {
+        type: "file" as const,
+        mime: "image/jpeg",
+        filename: "photo.jpg",
+        url: "data:image/jpeg;base64,cGhvdG8=",
+      };
+      await tryEnqueueInput(ctx, {
+        ...createIncomingPrompt("inspect this", { fileParts: [filePart] }),
+        displayText: "release screenshot",
+      });
 
       await dispatchNextQueuedPrompt();
 
@@ -201,11 +209,17 @@ describe("bot/handlers/prompt-queue-dispatch", () => {
         ctx,
         {
           id: "queued-1",
-          text: "",
-          fileParts: [],
-          photos: [photo],
+          text: "inspect this",
+          fileParts: [filePart],
+          photos: [],
+          displayText: "release screenshot",
+          mediaBytes: 0,
         },
         DEPS,
+        {},
+      );
+      expect(defined(sendBotTextMock.mock.calls[0]?.[0]).rawFallbackText).toContain(
+        "release screenshot",
       );
     });
 

@@ -3,6 +3,7 @@ import { resolveInteractionGuardDecision } from "./interaction-guard-decision.js
 import type { BlockReason, InteractionKind } from "../../app/types/interaction.js";
 import { reconcileForegroundBusyState } from "../../app/services/run-control-service.js";
 import {
+  canQueueMediaPrompt,
   shouldSuggestPromptQueue,
   tryEnqueuePrompt,
 } from "../handlers/prompt-queue-dispatch.js";
@@ -103,6 +104,11 @@ export async function interactionGuardMiddleware(ctx: Context, next: NextFunctio
   }
 
   const incomingPrompt = getIncomingPrompt(ctx);
+  if (decision.busy && !decision.state && canQueueMediaPrompt(ctx)) {
+    await next();
+    return;
+  }
+
   const isQueueableInput = Boolean(
     decision.busy && decision.inputType === "text" && !decision.state && incomingPrompt,
   );

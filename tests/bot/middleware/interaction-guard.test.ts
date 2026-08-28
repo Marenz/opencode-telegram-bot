@@ -8,6 +8,7 @@ import { promptQueue } from "../../../src/app/managers/prompt-queue-manager.js";
 import { MAX_QUEUED_PROMPTS } from "../../../src/app/managers/prompt-queue-manager.js";
 import { createIncomingPrompt } from "../../../src/app/types/prompt.js";
 import { setIncomingPrompt } from "../../../src/bot/handlers/rich-message-handler.js";
+import * as settingsStore from "../../../src/app/stores/settings-store.js";
 
 const mocked = vi.hoisted(() => ({
   reconcileForegroundBusyStateMock: vi.fn(),
@@ -54,6 +55,7 @@ function createVoiceContext(): Context {
 
 describe("interactionGuardMiddleware", () => {
   beforeEach(() => {
+    vi.restoreAllMocks();
     interactionManager.clear("test_setup");
     foregroundSessionState.__resetForTests();
     mocked.reconcileForegroundBusyStateMock.mockReset();
@@ -301,6 +303,35 @@ describe("interactionGuardMiddleware", () => {
     expect(ctx.reply).toHaveBeenCalledWith(
       `${t("bot.session_busy")} ${t("queue.disabled_hint")}`,
     );
+  });
+
+  it("passes queued media to its handler while busy", async () => {
+    vi.spyOn(settingsStore, "getPromptQueueEnabled").mockReturnValue(true);
+    foregroundSessionState.markBusy("session-1", "D:\\Projects\\Repo");
+    const ctx = {
+      chat: { id: 1 },
+      message: { photo: [{ file_id: "photo-file-id" }] },
+      reply: vi.fn().mockResolvedValue(undefined),
+    } as unknown as Context;
+    const next: NextFunction = vi.fn().mockResolvedValue(undefined);
+
+    await interactionGuardMiddleware(ctx, next);
+
+    expect(next).toHaveBeenCalledTimes(1);
+    expect(ctx.reply).not.toHaveBeenCalled();
+  });
+
+  it("does not pass media through a blocking interaction to the queue", async () => {
+    vi.spyOn(settingsStore, "getPromptQueueEnabled").mockReturnValue(true);
+    foregroundSessionState.markBusy("session-1", "D:\\Projects\\Repo");
+    interactionManager.start({ kind: "permission", expectedInput: "callback" });
+    const ctx = createVoiceContext();
+    const next: NextFunction = vi.fn().mockResolvedValue(undefined);
+
+    await interactionGuardMiddleware(ctx, next);
+
+    expect(next).not.toHaveBeenCalled();
+    expect(ctx.reply).toHaveBeenCalledWith(t("permission.blocked.expected_reply"));
   });
 
   it("does not suggest the queue for a reply keyboard button pressed while busy", async () => {
