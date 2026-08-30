@@ -1,11 +1,20 @@
 import { beforeEach, afterEach, describe, expect, it, vi } from "vitest";
 import type { Context } from "grammy";
+import { createIncomingPrompt } from "../../../src/app/types/prompt.js";
 
 const processUserPromptMock = vi.hoisted(() => vi.fn());
+const processUserPromptInputMock = vi.hoisted(() => vi.fn());
 const loggerErrorMock = vi.hoisted(() => vi.fn());
 
 vi.mock("../../../src/bot/handlers/prompt.js", () => ({
-  processUserPrompt: processUserPromptMock,
+  processUserPrompt: (
+    ctx: Context,
+    input: { text: string; fileParts: unknown[]; photos: unknown[] },
+    deps: unknown,
+  ) => {
+    processUserPromptInputMock(ctx, input, deps);
+    return processUserPromptMock(ctx, input.text, deps);
+  },
 }));
 
 vi.mock("../../../src/utils/logger.js", () => ({
@@ -13,7 +22,7 @@ vi.mock("../../../src/utils/logger.js", () => ({
 }));
 
 import {
-  queuePromptForMerging,
+  queuePromptForMerging as queueIncomingPromptForMerging,
   flushPendingPrompt,
   __resetMessageMergerForTests,
 } from "../../../src/bot/handlers/message-merger.js";
@@ -25,10 +34,20 @@ function makeContext(chatId: number): Context {
   return { chat: { id: chatId } } as unknown as Context;
 }
 
+function queuePromptForMerging(
+  ctx: Context,
+  text: string,
+  deps: typeof DEPS,
+  mergeWindowMs: number,
+): void {
+  queueIncomingPromptForMerging(ctx, createIncomingPrompt(text), deps, mergeWindowMs);
+}
+
 describe("message-merger", () => {
   beforeEach(() => {
     __resetMessageMergerForTests();
     processUserPromptMock.mockReset().mockResolvedValue(true);
+    processUserPromptInputMock.mockReset();
     loggerErrorMock.mockReset();
     vi.useFakeTimers();
   });
@@ -85,6 +104,36 @@ describe("message-merger", () => {
 
     expect(processUserPromptMock).toHaveBeenCalledTimes(1);
     expect(processUserPromptMock).toHaveBeenCalledWith(ctx, `${LARGE_TEXT}\n\npart 2`, DEPS);
+  });
+
+  it("keeps deferred rich photos in message order while merging", () => {
+    const ctx = makeContext(1);
+    const firstPhoto = { fileId: "photo-1", filename: "first.jpg", source: "rich" as const };
+    const secondPhoto = { fileId: "photo-2", filename: "second.jpg", source: "rich" as const };
+
+    queueIncomingPromptForMerging(
+      ctx,
+      createIncomingPrompt(LARGE_TEXT, { photos: [firstPhoto] }),
+      DEPS,
+      1500,
+    );
+    queueIncomingPromptForMerging(
+      ctx,
+      createIncomingPrompt("part 2", { photos: [secondPhoto] }),
+      DEPS,
+      1500,
+    );
+    vi.advanceTimersByTime(1500);
+
+    expect(processUserPromptInputMock).toHaveBeenCalledWith(
+      ctx,
+      {
+        text: `${LARGE_TEXT}\n\npart 2`,
+        fileParts: [],
+        photos: [firstPhoto, secondPhoto],
+      },
+      DEPS,
+    );
   });
 
   it("flushes separately when messages are farther apart than the window", () => {

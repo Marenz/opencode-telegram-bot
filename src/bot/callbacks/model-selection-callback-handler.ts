@@ -530,8 +530,12 @@ export async function handleModelSearchTextInput(ctx: Context): Promise<boolean>
   }
 
   const text = ctx.message?.text;
-  if (!text) {
+  if (text === undefined) {
     return false;
+  }
+
+  if (!text.trim()) {
+    return true;
   }
 
   logger.debug(`[ModelHandler] Model search query: "${text}"`);

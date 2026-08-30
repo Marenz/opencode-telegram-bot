@@ -104,6 +104,9 @@ export const ru: I18nDictionary = {
   "bot.file_download_error": "🔴 Не удалось скачать файл",
   "bot.file_type_unsupported":
     "⚠️ Этот тип файла не поддерживается. Отправьте изображение, документ (PDF, DOCX, PPTX) или текстовый/кодовый файл.",
+  "bot.rich_message_media_skipped":
+    "⚠️ Пропущено неподдерживаемых медиафрагментов: {count}.",
+  "bot.message_type_unsupported": "⚠️ Этот тип сообщения не поддерживается.",
   "bot.media_group_not_processed":
     "⚠️ Один или несколько файлов в альбоме нельзя обработать. В OpenCode ничего не отправлено.",
   "bot.media_group_download_error":

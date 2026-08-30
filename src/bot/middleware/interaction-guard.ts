@@ -8,6 +8,7 @@ import {
 } from "../handlers/prompt-queue-dispatch.js";
 import { logger } from "../../utils/logger.js";
 import { t } from "../../i18n/index.js";
+import { getIncomingPrompt } from "../handlers/rich-message-handler.js";
 
 function getInteractionBlockedMessage(
   reason: BlockReason | undefined,
@@ -101,13 +102,13 @@ export async function interactionGuardMiddleware(ctx: Context, next: NextFunctio
     return;
   }
 
-  const queueableText = ctx.message?.text;
+  const incomingPrompt = getIncomingPrompt(ctx);
   const isQueueableInput = Boolean(
-    decision.busy && decision.inputType === "text" && !decision.state && queueableText,
+    decision.busy && decision.inputType === "text" && !decision.state && incomingPrompt,
   );
 
-  if (isQueueableInput) {
-    const queued = await tryEnqueuePrompt(ctx, queueableText!);
+  if (isQueueableInput && incomingPrompt) {
+    const queued = await tryEnqueuePrompt(ctx, incomingPrompt);
     if (queued) {
       return;
     }
@@ -121,7 +122,7 @@ export async function interactionGuardMiddleware(ctx: Context, next: NextFunctio
 
   // Only hint where the message would actually have been queued - not for button
   // presses or commands that are turned down while the agent is busy.
-  if (isQueueableInput && shouldSuggestPromptQueue(queueableText!)) {
+  if (isQueueableInput && incomingPrompt && shouldSuggestPromptQueue(incomingPrompt)) {
     message = `${message} ${t("queue.disabled_hint")}`;
   }
 

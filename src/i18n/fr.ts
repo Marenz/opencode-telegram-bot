@@ -112,6 +112,9 @@ export const fr: I18nDictionary = {
   "bot.file_download_error": "🔴 Impossible de télécharger le fichier",
   "bot.file_type_unsupported":
     "⚠️ Ce type de fichier n'est pas pris en charge. Envoyez une image, un document (PDF, DOCX, PPTX) ou un fichier texte/code.",
+  "bot.rich_message_media_skipped":
+    "⚠️ {count} éléments multimédias non pris en charge ont été ignorés.",
+  "bot.message_type_unsupported": "⚠️ Ce type de message n'est pas pris en charge.",
   "bot.media_group_not_processed":
     "⚠️ Un ou plusieurs fichiers de cet album ne peuvent pas être traités. Rien n'a été envoyé à OpenCode.",
   "bot.media_group_download_error":

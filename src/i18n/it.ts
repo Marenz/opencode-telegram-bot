@@ -115,6 +115,9 @@ export const it: I18nDictionary = {
   "bot.file_download_error": "🔴 Download del file non riuscito",
   "bot.file_type_unsupported":
     "⚠️ Questo tipo di file non è supportato. Invia un'immagine, un documento (PDF, DOCX, PPTX) o un file di testo/codice.",
+  "bot.rich_message_media_skipped":
+    "⚠️ Sono stati ignorati {count} elementi multimediali non supportati.",
+  "bot.message_type_unsupported": "⚠️ Questo tipo di messaggio non è supportato.",
   "bot.media_group_not_processed":
     "⚠️ Uno o più file di questo album non possono essere elaborati. Nulla è stato inviato a OpenCode.",
   "bot.media_group_download_error":

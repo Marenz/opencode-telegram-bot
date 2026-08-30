@@ -1,6 +1,7 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import type { Context } from "grammy";
 import { defined } from "../../helpers/defined.js";
+import { createIncomingPrompt } from "../../../src/app/types/prompt.js";
 
 const processUserPromptMock = vi.hoisted(() => vi.fn());
 const getPromptQueueEnabledMock = vi.hoisted(() => vi.fn());
@@ -33,8 +34,8 @@ import {
   __resetPromptQueueDispatchForTests,
   dispatchNextQueuedPrompt,
   initializePromptQueueDispatch,
-  shouldSuggestPromptQueue,
-  tryEnqueuePrompt,
+  shouldSuggestPromptQueue as shouldSuggestPromptQueueInput,
+  tryEnqueuePrompt as tryEnqueueInput,
 } from "../../../src/bot/handlers/prompt-queue-dispatch.js";
 
 const DEPS = { bot: {} as never, ensureEventSubscription: vi.fn() };
@@ -48,6 +49,14 @@ function makeContext(): Context {
     api: { sendMessage: vi.fn() },
     reply: replyMock,
   } as unknown as Context;
+}
+
+function tryEnqueuePrompt(ctx: Context, text: string): Promise<boolean> {
+  return tryEnqueueInput(ctx, createIncomingPrompt(text));
+}
+
+function shouldSuggestPromptQueue(text: string): boolean {
+  return shouldSuggestPromptQueueInput(createIncomingPrompt(text));
 }
 
 describe("bot/handlers/prompt-queue-dispatch", () => {
@@ -176,9 +185,28 @@ describe("bot/handlers/prompt-queue-dispatch", () => {
       expect(echo.options).toEqual({ reply_markup: KEYBOARD });
 
       expect(processUserPromptMock).toHaveBeenCalledTimes(1);
-      expect(defined(processUserPromptMock.mock.calls[0]?.[1])).toBe("first");
+      expect(defined(processUserPromptMock.mock.calls[0]?.[1]).text).toBe("first");
       expect(defined(processUserPromptMock.mock.calls[0]?.[2])).toBe(DEPS);
       expect(promptQueue.list().map((item) => item.text)).toEqual(["second"]);
+    });
+
+    it("dispatches a queued photo-only rich prompt with its descriptor intact", async () => {
+      const ctx = makeContext();
+      const photo = { fileId: "photo-1", filename: "rich.jpg", source: "rich" as const };
+      await tryEnqueueInput(ctx, createIncomingPrompt("", { photos: [photo] }));
+
+      await dispatchNextQueuedPrompt();
+
+      expect(processUserPromptMock).toHaveBeenCalledWith(
+        ctx,
+        {
+          id: "queued-1",
+          text: "",
+          fileParts: [],
+          photos: [photo],
+        },
+        DEPS,
+      );
     });
 
     it("drains the queue one prompt per idle transition", async () => {
@@ -189,7 +217,10 @@ describe("bot/handlers/prompt-queue-dispatch", () => {
       await dispatchNextQueuedPrompt();
       await dispatchNextQueuedPrompt();
 
-      expect(processUserPromptMock.mock.calls.map((call) => call[1])).toEqual(["first", "second"]);
+      expect(processUserPromptMock.mock.calls.map((call) => call[1].text)).toEqual([
+        "first",
+        "second",
+      ]);
       expect(promptQueue.size()).toBe(0);
     });
 
@@ -219,7 +250,10 @@ describe("bot/handlers/prompt-queue-dispatch", () => {
 
       await dispatchNextQueuedPrompt();
 
-      expect(processUserPromptMock.mock.calls.map((call) => call[1])).toEqual(["first", "second"]);
+      expect(processUserPromptMock.mock.calls.map((call) => call[1].text)).toEqual([
+        "first",
+        "second",
+      ]);
     });
 
     it("does not requeue a prompt that could not be dispatched", async () => {

@@ -76,7 +76,8 @@ function createVoiceDeps(overrides: Record<string, unknown> = {}): {
     isSttConfigured: vi.fn(() => true),
     downloadTelegramFile: downloadMock,
     transcribeAudio: transcribeMock,
-    processPrompt: processPromptMock,
+    processPrompt: (ctx, input, promptDeps, options) =>
+      processPromptMock(ctx, input.text, promptDeps, input.fileParts, options),
     ...overrides,
   };
 

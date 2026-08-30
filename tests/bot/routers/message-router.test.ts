@@ -5,6 +5,7 @@ import { promptQueue } from "../../../src/app/managers/prompt-queue-manager.js";
 import { interactionManager } from "../../../src/app/managers/interaction-manager.js";
 import { t } from "../../../src/i18n/index.js";
 import { defined } from "../../helpers/defined.js";
+import { createIncomingPrompt } from "../../../src/app/types/prompt.js";
 
 describe("bot/routers/message-router", () => {
   it("registers reply keyboard, media, and text routes", () => {
@@ -30,6 +31,7 @@ describe("bot/routers/message-router", () => {
       "message:photo",
       "message:document",
       "message:text",
+      "message",
     ]);
   });
 
@@ -59,9 +61,9 @@ describe("bot/routers/message-router", () => {
     });
 
     it("removes the pressed prompt from the middle of the queue", async () => {
-      promptQueue.add("first");
-      promptQueue.add("second");
-      promptQueue.add("third");
+      promptQueue.add(createIncomingPrompt("first"));
+      promptQueue.add(createIncomingPrompt("second"));
+      promptQueue.add(createIncomingPrompt("third"));
       const handler = registerAndGetQueuedPromptHandler();
       const ctx = makeButtonContext("❌ 2. second");
       const next = vi.fn();
@@ -85,7 +87,7 @@ describe("bot/routers/message-router", () => {
     });
 
     it("answers not_found when the label no longer matches the queue", async () => {
-      promptQueue.add("still queued");
+      promptQueue.add(createIncomingPrompt("still queued"));
       const handler = registerAndGetQueuedPromptHandler();
       const ctx = makeButtonContext("❌ 3. already gone");
       const next = vi.fn();

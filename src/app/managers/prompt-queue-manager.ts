@@ -1,10 +1,10 @@
 import { logger } from "../../utils/logger.js";
+import type { IncomingPrompt } from "../types/prompt.js";
 
 export const MAX_QUEUED_PROMPTS = 5;
 
-export interface QueuedPrompt {
+export interface QueuedPrompt extends IncomingPrompt {
   id: string;
-  text: string;
 }
 
 /**
@@ -17,20 +17,28 @@ class PromptQueueManager {
   private items: QueuedPrompt[] = [];
   private nextId = 1;
 
-  add(text: string): QueuedPrompt | null {
-    const normalizedText = text.trim();
-    if (!normalizedText || this.isFull()) {
+  add(input: IncomingPrompt): QueuedPrompt | null {
+    const normalizedText = input.text.trim();
+    if (
+      (!normalizedText && input.fileParts.length === 0 && input.photos.length === 0) ||
+      this.isFull()
+    ) {
       return null;
     }
 
-    const item: QueuedPrompt = { id: `queued-${this.nextId++}`, text: normalizedText };
+    const item: QueuedPrompt = {
+      id: `queued-${this.nextId++}`,
+      text: normalizedText,
+      fileParts: [...input.fileParts],
+      photos: [...input.photos],
+    };
     this.items.push(item);
     logger.debug(`[PromptQueue] Prompt queued: id=${item.id}, size=${this.items.length}`);
     return item;
   }
 
   list(): QueuedPrompt[] {
-    return this.items.map((item) => ({ ...item }));
+    return this.items.map(copyQueuedPrompt);
   }
 
   removeById(id: string): QueuedPrompt | null {
@@ -81,3 +89,11 @@ class PromptQueueManager {
 }
 
 export const promptQueue = new PromptQueueManager();
+
+function copyQueuedPrompt(item: QueuedPrompt): QueuedPrompt {
+  return {
+    ...item,
+    fileParts: [...item.fileParts],
+    photos: [...item.photos],
+  };
+}

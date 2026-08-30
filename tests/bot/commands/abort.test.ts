@@ -8,6 +8,7 @@ import { renameManager } from "../../../src/app/managers/rename-manager.js";
 import { interactionManager } from "../../../src/app/managers/interaction-manager.js";
 import { foregroundSessionState } from "../../../src/app/managers/foreground-session-state-manager.js";
 import { promptQueue } from "../../../src/app/managers/prompt-queue-manager.js";
+import { createIncomingPrompt } from "../../../src/app/types/prompt.js";
 import { promptAttachment } from "../../../src/app/managers/prompt-attachment-manager.js";
 import type { Question } from "../../../src/app/types/question.js";
 import type { PermissionRequest } from "../../../src/app/types/permission.js";
@@ -179,7 +180,7 @@ describe("bot/commands/abort", () => {
       data: { "session-1": { type: "idle" } },
       error: null,
     });
-    promptQueue.add("queued while running");
+    promptQueue.add(createIncomingPrompt("queued while running"));
 
     const ctx = {
       chat: { id: 777 },

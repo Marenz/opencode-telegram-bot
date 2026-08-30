@@ -113,6 +113,8 @@ export const ko: I18nDictionary = {
   "bot.file_download_error": "🔴 파일 다운로드에 실패했습니다",
   "bot.file_type_unsupported":
     "⚠️ 지원되지 않는 파일 형식입니다. 이미지, 문서(PDF, DOCX, PPTX) 또는 텍스트/코드 파일을 보내 주세요.",
+  "bot.rich_message_media_skipped": "⚠️ 지원되지 않는 미디어 {count}개를 건너뛰었습니다.",
+  "bot.message_type_unsupported": "⚠️ 지원되지 않는 메시지 형식입니다.",
   "bot.media_group_not_processed":
     "⚠️ 이 앨범의 일부 파일은 처리할 수 없습니다. OpenCode에 아무것도 전송되지 않았습니다.",
   "bot.media_group_download_error":

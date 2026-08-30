@@ -9,7 +9,7 @@ vi.mock("../../../src/bot/handlers/message-merger.js", () => ({
 }));
 
 import { handlePhotoMessage, type PhotoHandlerDeps } from "../../../src/bot/handlers/photo-handler.js";
-import { t } from "../../../src/i18n/index.js";
+import { createIncomingPrompt } from "../../../src/app/types/prompt.js";
 
 function createPhotoContext(caption = "Describe this"): { ctx: Context; replyMock: ReturnType<typeof vi.fn> } {
   const replyMock = vi.fn().mockResolvedValue({ message_id: 100 });
@@ -60,40 +60,49 @@ describe("bot/handlers/photo-handler", () => {
     flushPendingPromptMock.mockClear();
   });
 
-  it("downloads the largest photo and sends it as a file part", async () => {
+  it("passes the largest photo to the shared prompt pipeline", async () => {
     const { ctx, replyMock } = createPhotoContext();
-    const { deps, processPromptMock, downloadMock } = createDeps();
+    const { deps, processPromptMock, downloadMock, getCapabilitiesMock } = createDeps();
 
     await handlePhotoMessage(ctx, deps);
 
     expect(flushPendingPromptMock).toHaveBeenCalledWith(777);
-    expect(replyMock).toHaveBeenCalledWith(t("bot.photo_downloading"));
-    expect(downloadMock).toHaveBeenCalledWith(ctx.api, "large-photo");
+    expect(replyMock).not.toHaveBeenCalled();
+    expect(downloadMock).not.toHaveBeenCalled();
+    expect(getCapabilitiesMock).not.toHaveBeenCalled();
     expect(processPromptMock).toHaveBeenCalledWith(
       ctx,
-      "Describe this",
+      createIncomingPrompt("Describe this", {
+        photos: [
+          {
+            fileId: "large-photo",
+            filename: "photo.jpg",
+            source: "standalone",
+          },
+        ],
+      }),
       deps,
-      [
-        expect.objectContaining({
-          type: "file",
-          mime: "image/jpeg",
-          filename: "photo.jpg",
-          url: expect.stringMatching(/^data:image\/jpeg;base64,/),
-        }),
-      ],
     );
   });
 
-  it("falls back to caption-only when the model does not support images", async () => {
-    const { ctx, replyMock } = createPhotoContext("Use this caption");
-    const { deps, processPromptMock, downloadMock } = createDeps({
-      getModelCapabilities: vi.fn().mockResolvedValue({ input: { image: false } }),
-    });
+  it("keeps a photo-only prompt when the caption is empty", async () => {
+    const { ctx } = createPhotoContext("");
+    const { deps, processPromptMock } = createDeps();
 
     await handlePhotoMessage(ctx, deps);
 
-    expect(replyMock).toHaveBeenCalledWith(t("bot.photo_model_no_image"));
-    expect(downloadMock).not.toHaveBeenCalled();
-    expect(processPromptMock).toHaveBeenCalledWith(ctx, "Use this caption", deps);
+    expect(processPromptMock).toHaveBeenCalledWith(
+      ctx,
+      createIncomingPrompt("", {
+        photos: [
+          {
+            fileId: "large-photo",
+            filename: "photo.jpg",
+            source: "standalone",
+          },
+        ],
+      }),
+      deps,
+    );
   });
 });

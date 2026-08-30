@@ -35,7 +35,8 @@ vi.mock("../../../src/opencode/client.js", () => ({
 }));
 
 vi.mock("../../../src/bot/handlers/prompt.js", () => ({
-  processUserPrompt: mocked.processUserPromptMock,
+  processUserPrompt: (ctx: Context, input: { text: string }, deps: ProcessPromptDeps) =>
+    mocked.processUserPromptMock(ctx, input.text, deps),
 }));
 
 function createCommandContext(messageId: number): Context {

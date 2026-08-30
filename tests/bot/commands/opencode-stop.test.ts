@@ -75,6 +75,7 @@ vi.mock("../../../src/bot/handlers/prompt.js", () => ({
 
 import { opencodeStopCommand } from "../../../src/bot/commands/opencode-stop-command.js";
 import { promptQueue } from "../../../src/app/managers/prompt-queue-manager.js";
+import { createIncomingPrompt } from "../../../src/app/types/prompt.js";
 import { interactionManager } from "../../../src/app/managers/interaction-manager.js";
 
 function createContext(): Context {
@@ -186,7 +187,7 @@ describe("bot/commands/opencode-stop-command", () => {
       directory: "D:/repo",
       busy: true,
     });
-    promptQueue.add("queued after hang");
+    promptQueue.add(createIncomingPrompt("queued after hang"));
     interactionManager.start({
       kind: "question",
       expectedInput: "mixed",

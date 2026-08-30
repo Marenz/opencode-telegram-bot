@@ -77,7 +77,10 @@ function createDocumentDeps(overrides: Partial<DocumentHandlerDeps> = {}): {
     downloadFile: downloadMock,
     getModelCapabilities: getCapabilitiesMock,
     getStoredModel: getStoredModelMock,
-    processPrompt: processPromptMock,
+    processPrompt: (ctx, input, promptDeps) =>
+      input.fileParts.length > 0
+        ? processPromptMock(ctx, input.text, promptDeps, input.fileParts)
+        : processPromptMock(ctx, input.text, promptDeps),
     ...overrides,
   };
 

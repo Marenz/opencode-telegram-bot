@@ -14,6 +14,7 @@ import { logger } from "../../utils/logger.js";
 import { t } from "../../i18n/index.js";
 import type { FilePartInput, Model } from "@opencode-ai/sdk/v2";
 import { flushPendingPrompt } from "./message-merger.js";
+import { createIncomingPrompt, type IncomingPrompt } from "../../app/types/prompt.js";
 
 export interface DocumentHandlerDeps extends ProcessPromptDeps {
   downloadFile?: (
@@ -27,9 +28,8 @@ export interface DocumentHandlerDeps extends ProcessPromptDeps {
   getStoredModel?: () => { providerID: string; modelID: string };
   processPrompt?: (
     ctx: Context,
-    text: string,
+    input: IncomingPrompt,
     deps: ProcessPromptDeps,
-    fileParts?: FilePartInput[],
   ) => Promise<boolean>;
 }
 
@@ -76,7 +76,7 @@ export async function handleDocumentMessage(
         `[Document] Sending text file (${downloadedFile.buffer.length} bytes, ${filename}) as prompt`,
       );
 
-      await processPrompt(ctx, promptWithFile, deps);
+      await processPrompt(ctx, createIncomingPrompt(promptWithFile), deps);
       return;
     }
 
@@ -91,7 +91,7 @@ export async function handleDocumentMessage(
         await ctx.reply(t("bot.photo_model_no_image"));
 
         if (caption.trim().length > 0) {
-          await processPrompt(ctx, caption, deps);
+          await processPrompt(ctx, createIncomingPrompt(caption), deps);
         }
         return;
       }
@@ -112,7 +112,7 @@ export async function handleDocumentMessage(
         `[Document] Sending image (${downloadedFile.buffer.length} bytes, ${filename}, ${mimeType}) with prompt`,
       );
 
-      await processPrompt(ctx, caption, deps, [filePart]);
+      await processPrompt(ctx, createIncomingPrompt(caption, { fileParts: [filePart] }), deps);
       return;
     }
 
@@ -148,13 +148,13 @@ export async function handleDocumentMessage(
             logger.info(
               `[Document] Sending extracted document text from ${filename} (${result.text.length} chars) as prompt`,
             );
-            await processPrompt(ctx, promptWithFile, deps);
+            await processPrompt(ctx, createIncomingPrompt(promptWithFile), deps);
           } catch (extractErr) {
             const errMsg = extractErr instanceof Error ? extractErr.message : String(extractErr);
             logger.error(`[Document] Document extraction failed: ${errMsg}`);
             await ctx.reply(t("bot.document_extraction_error"));
             if (caption.trim().length > 0) {
-              await processPrompt(ctx, caption, deps);
+              await processPrompt(ctx, createIncomingPrompt(caption), deps);
             }
           }
         } else {
@@ -163,7 +163,7 @@ export async function handleDocumentMessage(
           );
           await ctx.reply(t("bot.model_no_pdf"));
           if (caption.trim().length > 0) {
-            await processPrompt(ctx, caption, deps);
+            await processPrompt(ctx, createIncomingPrompt(caption), deps);
           }
         }
         return;
@@ -185,7 +185,7 @@ export async function handleDocumentMessage(
         `[Document] Sending document (${downloadedFile.buffer.length} bytes, ${filename}, ${mimeType}) with prompt`,
       );
 
-      await processPrompt(ctx, caption, deps, [filePart]);
+      await processPrompt(ctx, createIncomingPrompt(caption, { fileParts: [filePart] }), deps);
       return;
     }
 

@@ -12,7 +12,9 @@ import {
   toDataUri,
 } from "../../app/services/file-download-service.js";
 import { processUserPrompt, type ProcessPromptDeps } from "./prompt.js";
+import { createIncomingPrompt, type IncomingPrompt } from "../../app/types/prompt.js";
 import { flushPendingPrompt } from "./message-merger.js";
+import { handleUnsupportedMessages } from "./unsupported-message-handler.js";
 
 const DEFAULT_MEDIA_GROUP_DEBOUNCE_MS = 1_000;
 
@@ -78,9 +80,8 @@ export interface MediaGroupHandlerDeps extends ProcessPromptDeps {
   getStoredModel?: () => { providerID: string; modelID: string };
   processPrompt?: (
     ctx: Context,
-    text: string,
+    input: IncomingPrompt,
     deps: ProcessPromptDeps,
-    fileParts?: FilePartInput[],
   ) => Promise<boolean>;
 }
 
@@ -201,6 +202,14 @@ export class MediaGroupAttachmentHandler {
     logger.info(`[MediaGroup] Processing Telegram media group: key=${key}, items=${items.length}`);
 
     try {
+      const unsupportedContexts = items
+        .filter((item) => item.kind === "unsupported")
+        .map((item) => item.ctx);
+      if (unsupportedContexts.length > 0) {
+        await handleUnsupportedMessages(unsupportedContexts);
+        return;
+      }
+
       const validationResult = await this.validateItems(items);
       if ("reason" in validationResult) {
         logger.warn(
@@ -219,7 +228,7 @@ export class MediaGroupAttachmentHandler {
         `[MediaGroup] Sending media group as one prompt: key=${key}, files=${fileParts.length}, textLength=${promptText.length}`,
       );
 
-      await processPrompt(replyCtx, promptText, this.deps, fileParts);
+      await processPrompt(replyCtx, createIncomingPrompt(promptText, { fileParts }), this.deps);
     } catch (err) {
       logger.error(`[MediaGroup] Failed to process media group: key=${key}`, err);
       await replyCtx.reply(t("bot.media_group_download_error"));

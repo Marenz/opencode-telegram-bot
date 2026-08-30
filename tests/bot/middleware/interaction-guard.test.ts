@@ -4,14 +4,27 @@ import { interactionGuardMiddleware } from "../../../src/bot/middleware/interact
 import { interactionManager } from "../../../src/app/managers/interaction-manager.js";
 import { foregroundSessionState } from "../../../src/app/managers/foreground-session-state-manager.js";
 import { t } from "../../../src/i18n/index.js";
+import { promptQueue } from "../../../src/app/managers/prompt-queue-manager.js";
+import { MAX_QUEUED_PROMPTS } from "../../../src/app/managers/prompt-queue-manager.js";
+import { createIncomingPrompt } from "../../../src/app/types/prompt.js";
+import { setIncomingPrompt } from "../../../src/bot/handlers/rich-message-handler.js";
 
 const mocked = vi.hoisted(() => ({
   reconcileForegroundBusyStateMock: vi.fn(),
+  getPromptQueueEnabled: vi.fn(),
 }));
 
 vi.mock("../../../src/app/services/run-control-service.js", () => ({
   reconcileForegroundBusyState: mocked.reconcileForegroundBusyStateMock,
 }));
+
+vi.mock("../../../src/app/stores/settings-store.js", async (importOriginal) => {
+  const actual = await importOriginal<typeof import("../../../src/app/stores/settings-store.js")>();
+  return {
+    ...actual,
+    getPromptQueueEnabled: mocked.getPromptQueueEnabled,
+  };
+});
 
 function createTextContext(text: string): Context {
   return {
@@ -45,6 +58,8 @@ describe("interactionGuardMiddleware", () => {
     foregroundSessionState.__resetForTests();
     mocked.reconcileForegroundBusyStateMock.mockReset();
     mocked.reconcileForegroundBusyStateMock.mockResolvedValue(undefined);
+    mocked.getPromptQueueEnabled.mockReset().mockReturnValue(false);
+    promptQueue.__resetForTests();
   });
 
   it("passes through when there is no active interaction", async () => {
@@ -387,5 +402,52 @@ describe("interactionGuardMiddleware", () => {
 
     expect(next).toHaveBeenCalledTimes(1);
     expect(ctx.answerCallbackQuery).not.toHaveBeenCalled();
+  });
+
+  it("queues a photo-only rich prompt while busy without downloading", async () => {
+    mocked.getPromptQueueEnabled.mockReturnValue(true);
+    foregroundSessionState.markBusy("session-1", "D:\\Projects\\Repo");
+    const ctx = createTextContext("");
+    setIncomingPrompt(
+      ctx,
+      createIncomingPrompt("", {
+        photos: [{ fileId: "photo-1", filename: "rich.jpg", source: "rich" }],
+      }),
+    );
+    const next: NextFunction = vi.fn().mockResolvedValue(undefined);
+
+    await interactionGuardMiddleware(ctx, next);
+
+    expect(next).not.toHaveBeenCalled();
+    expect(promptQueue.list()).toEqual([
+      expect.objectContaining({
+        text: "",
+        photos: [{ fileId: "photo-1", filename: "rich.jpg", source: "rich" }],
+      }),
+    ]);
+    expect(ctx.reply).toHaveBeenCalledWith(
+      t("queue.added", { count: "1", max: String(MAX_QUEUED_PROMPTS) }),
+      expect.anything(),
+    );
+  });
+
+  it("rejects a rich prompt when the queue is full", async () => {
+    mocked.getPromptQueueEnabled.mockReturnValue(true);
+    foregroundSessionState.markBusy("session-1", "D:\\Projects\\Repo");
+    for (let index = 0; index < MAX_QUEUED_PROMPTS; index++) {
+      promptQueue.add(createIncomingPrompt(`queued ${index}`));
+    }
+    const ctx = createTextContext("overflow");
+    setIncomingPrompt(ctx, createIncomingPrompt("overflow"));
+    const next: NextFunction = vi.fn().mockResolvedValue(undefined);
+
+    await interactionGuardMiddleware(ctx, next);
+
+    expect(next).not.toHaveBeenCalled();
+    expect(promptQueue.size()).toBe(MAX_QUEUED_PROMPTS);
+    expect(ctx.reply).toHaveBeenCalledWith(
+      t("queue.full", { max: String(MAX_QUEUED_PROMPTS) }),
+      expect.anything(),
+    );
   });
 });

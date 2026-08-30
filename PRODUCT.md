@@ -184,6 +184,7 @@ Model picker behavior:
 - [x] `/messages` command: browse session messages with revert and fork functionality
 - [x] Optional message queue for text sent while the agent is busy, managed from the bottom keyboard
 - [x] Native Telegram rich message formatting for assistant replies (Bot API 10.1)
+- [x] Incoming Telegram rich formatted messages (Bot API 10.1): converted to Markdown, accepted anywhere text is accepted, with photos attached and unsupported message types answered explicitly
 
 ## Current Task List
 

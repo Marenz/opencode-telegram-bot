@@ -13,6 +13,7 @@ import { safeBackgroundTask } from "../utils/safe-background-task.js";
 import { withTelegramRateLimitRetry } from "../utils/telegram-rate-limit-retry.js";
 import { registerCallbackRouter } from "./callbacks/callback-router.js";
 import { initializePromptQueueDispatch } from "./handlers/prompt-queue-dispatch.js";
+import { normalizeRichMessage } from "./handlers/rich-message-handler.js";
 import { authMiddleware } from "./middleware/auth.js";
 import { interactionGuardMiddleware } from "./middleware/interaction-guard.js";
 import { staleUpdateMiddleware } from "./middleware/stale-update.js";
@@ -173,6 +174,7 @@ export function createBot(): Bot<Context> {
 
   bot.use(authMiddleware);
   bot.use(staleUpdateMiddleware);
+  bot.on("message:rich_message", normalizeRichMessage);
   bot.use(ensureCommandsInitialized);
   bot.use(interactionGuardMiddleware);
 

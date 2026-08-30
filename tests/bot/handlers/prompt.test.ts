@@ -1,11 +1,14 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import type { Bot, Context } from "grammy";
+import type { FilePartInput } from "@opencode-ai/sdk/v2";
 import {
   consumePromptResponseMode,
-  processUserPrompt,
+  processUserPrompt as processIncomingPrompt,
   type ProcessPromptDeps,
 } from "../../../src/bot/handlers/prompt.js";
 import { promptAttachment } from "../../../src/app/managers/prompt-attachment-manager.js";
+import { createIncomingPrompt } from "../../../src/app/types/prompt.js";
+import { t } from "../../../src/i18n/index.js";
 
 const mocked = vi.hoisted(() => ({
   resolvePendingAttachmentMock: vi.fn(),
@@ -161,6 +164,16 @@ function createDeps(): ProcessPromptDeps {
     bot: { api: { sendMessage: vi.fn().mockResolvedValue(undefined) } } as unknown as Bot<Context>,
     ensureEventSubscription: vi.fn().mockResolvedValue(undefined),
   };
+}
+
+function processUserPrompt(
+  ctx: Context,
+  text: string,
+  deps: ProcessPromptDeps,
+  fileParts: FilePartInput[] = [],
+  options: { responseMode?: "text_only" | "text_and_tts" } = {},
+): Promise<boolean> {
+  return processIncomingPrompt(ctx, createIncomingPrompt(text, { fileParts }), deps, options);
 }
 
 function getScheduledBackgroundTask(): {
@@ -349,6 +362,130 @@ describe("bot/handlers/prompt", () => {
         ],
       }),
     );
+  });
+
+  it("does not call OpenCode for an empty prompt without attachments", async () => {
+    const ctx = createContext();
+
+    const handled = await processIncomingPrompt(ctx, createIncomingPrompt(""), createDeps());
+
+    expect(handled).toBe(false);
+    expect(mocked.attachToSessionMock).not.toHaveBeenCalled();
+    expect(mocked.safeBackgroundTaskMock).not.toHaveBeenCalled();
+    expect(ctx.reply).not.toHaveBeenCalled();
+  });
+
+  it("downloads deferred rich photos after the prompt is accepted", async () => {
+    const ctx = createContext();
+    const downloadFile = vi.fn().mockResolvedValue({
+      buffer: Buffer.from("photo"),
+      filePath: "photos/rich.jpg",
+    });
+    const deps: ProcessPromptDeps = {
+      ...createDeps(),
+      downloadFile,
+      getModelCapabilities: vi.fn().mockResolvedValue({ input: { image: true } }),
+    };
+
+    const handled = await processIncomingPrompt(
+      ctx,
+      createIncomingPrompt("", {
+        photos: [{ fileId: "rich-photo", filename: "rich.jpg", source: "rich" }],
+      }),
+      deps,
+    );
+
+    expect(handled).toBe(true);
+    expect(ctx.reply).toHaveBeenCalledWith(t("bot.photo_downloading"));
+    expect(downloadFile).toHaveBeenCalledWith(ctx.api, "rich-photo");
+
+    const backgroundTask = getScheduledBackgroundTask();
+    await backgroundTask.task();
+    expect(mocked.sessionPromptAsyncMock).toHaveBeenCalledWith(
+      expect.objectContaining({
+        parts: [
+          { type: "text", text: "See attached file" },
+          expect.objectContaining({
+            type: "file",
+            mime: "image/jpeg",
+            filename: "rich.jpg",
+            url: expect.stringMatching(/^data:image\/jpeg;base64,/),
+          }),
+        ],
+      }),
+    );
+  });
+
+  it("keeps the standalone-photo caption fallback for models without images", async () => {
+    const ctx = createContext();
+    const downloadFile = vi.fn();
+    const deps: ProcessPromptDeps = {
+      ...createDeps(),
+      downloadFile,
+      getModelCapabilities: vi.fn().mockResolvedValue({ input: { image: false } }),
+    };
+
+    const handled = await processIncomingPrompt(
+      ctx,
+      createIncomingPrompt("Use this caption", {
+        photos: [{ fileId: "photo", filename: "photo.jpg", source: "standalone" }],
+      }),
+      deps,
+    );
+
+    expect(handled).toBe(true);
+    expect(ctx.reply).toHaveBeenCalledWith(t("bot.photo_model_no_image"));
+    expect(downloadFile).not.toHaveBeenCalled();
+
+    const backgroundTask = getScheduledBackgroundTask();
+    await backgroundTask.task();
+    expect(mocked.sessionPromptAsyncMock).toHaveBeenCalledWith(
+      expect.objectContaining({
+        parts: [{ type: "text", text: "Use this caption" }],
+      }),
+    );
+  });
+
+  it("rejects a rich photo envelope when the model does not support images", async () => {
+    const ctx = createContext();
+    const deps: ProcessPromptDeps = {
+      ...createDeps(),
+      downloadFile: vi.fn(),
+      getModelCapabilities: vi.fn().mockResolvedValue({ input: { image: false } }),
+    };
+
+    const handled = await processIncomingPrompt(
+      ctx,
+      createIncomingPrompt("Describe this", {
+        photos: [{ fileId: "photo", filename: "photo.jpg", source: "rich" }],
+      }),
+      deps,
+    );
+
+    expect(handled).toBe(false);
+    expect(ctx.reply).toHaveBeenCalledWith(t("bot.photo_model_no_image"));
+    expect(mocked.safeBackgroundTaskMock).not.toHaveBeenCalled();
+  });
+
+  it("aborts a rich envelope when one photo download fails", async () => {
+    const ctx = createContext();
+    const deps: ProcessPromptDeps = {
+      ...createDeps(),
+      downloadFile: vi.fn().mockRejectedValue(new Error("download failed")),
+      getModelCapabilities: vi.fn().mockResolvedValue({ input: { image: true } }),
+    };
+
+    const handled = await processIncomingPrompt(
+      ctx,
+      createIncomingPrompt("Describe this", {
+        photos: [{ fileId: "photo", filename: "photo.jpg", source: "rich" }],
+      }),
+      deps,
+    );
+
+    expect(handled).toBe(false);
+    expect(ctx.reply).toHaveBeenLastCalledWith(t("bot.photo_download_error"));
+    expect(mocked.safeBackgroundTaskMock).not.toHaveBeenCalled();
   });
 
   describe("pending /ls attachment", () => {

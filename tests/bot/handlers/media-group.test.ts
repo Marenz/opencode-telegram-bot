@@ -118,7 +118,8 @@ function createDeps(overrides: Partial<MediaGroupHandlerDeps> = {}): {
     downloadFile: downloadMock,
     getModelCapabilities: getCapabilitiesMock,
     getStoredModel: vi.fn(() => ({ providerID: "test-provider", modelID: "test-model" })),
-    processPrompt: processPromptMock,
+    processPrompt: (ctx, input, promptDeps) =>
+      processPromptMock(ctx, input.text, promptDeps, input.fileParts),
     ...overrides,
   };
 
@@ -340,7 +341,7 @@ describe("bot/handlers/media-group", () => {
     await addToHandler(handler, unsupported.ctx);
     await handler.flushAll();
 
-    expect(unsupported.replyMock).toHaveBeenCalledWith(t("bot.media_group_not_processed"));
+    expect(unsupported.replyMock).toHaveBeenCalledWith(t("bot.message_type_unsupported"));
     expect(downloadMock).not.toHaveBeenCalled();
     expect(processPromptMock).not.toHaveBeenCalled();
   });

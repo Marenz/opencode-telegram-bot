@@ -104,6 +104,8 @@ export const en = {
   "bot.file_download_error": "🔴 Failed to download file",
   "bot.file_type_unsupported":
     "⚠️ This file type is not supported. Send an image, document (PDF, DOCX, PPTX), or text/code file.",
+  "bot.rich_message_media_skipped": "⚠️ Skipped {count} unsupported media part(s).",
+  "bot.message_type_unsupported": "⚠️ This message type is not supported.",
   "bot.media_group_not_processed":
     "⚠️ One or more files in this album cannot be processed. Nothing was sent to OpenCode.",
   "bot.media_group_download_error":
