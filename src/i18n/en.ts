@@ -118,7 +118,8 @@ export const en = {
   "status.health.healthy": "Healthy",
   "status.health.unhealthy": "Unhealthy",
   "status.line.health": "Status: {health}",
-  "status.line.version": "Version: {version}",
+  "status.line.version": "OpenCode version: {version}",
+  "status.line.bot_version": "Bot version: {version}",
   "status.line.managed_yes": "Started by bot: Yes",
   "status.line.managed_no": "Started by bot: No",
   "status.line.pid": "PID: {pid}",
@@ -137,8 +138,8 @@ export const en = {
   "status.session_selected": "Current session: {title}",
   "status.session_not_selected": "Current session: not selected",
   "status.session_hint": "Use /sessions to select one or /new to create one",
-  "status.server_unavailable":
-    "🔴 OpenCode Server is unavailable\n\nUse /opencode_start to start the server.",
+  "status.header_unavailable": "🔴 OpenCode Server is unavailable",
+  "status.unavailable_hint": "Use /opencode_start to start the server.",
 
   "tts.off": "🔇 Audio replies disabled.",
   "tts.all": "🔊 Audio replies enabled for all messages.",

@@ -127,7 +127,8 @@ export const es: I18nDictionary = {
   "status.health.healthy": "Saludable",
   "status.health.unhealthy": "No saludable",
   "status.line.health": "Estado: {health}",
-  "status.line.version": "Versión: {version}",
+  "status.line.version": "Versión de OpenCode: {version}",
+  "status.line.bot_version": "Bot version: {version}",
   "status.line.managed_yes": "Iniciado por el bot: Sí",
   "status.line.managed_no": "Iniciado por el bot: No",
   "status.line.pid": "PID: {pid}",
@@ -146,8 +147,8 @@ export const es: I18nDictionary = {
   "status.session_selected": "Sesión actual: {title}",
   "status.session_not_selected": "Sesión actual: no seleccionada",
   "status.session_hint": "Usa /sessions para elegir una o /new para crear una",
-  "status.server_unavailable":
-    "🔴 OpenCode Server no está disponible\n\nUsa /opencode_start para iniciar el servidor.",
+  "status.header_unavailable": "🔴 OpenCode Server no está disponible",
+  "status.unavailable_hint": "Usa /opencode_start para iniciar el servidor.",
 
   "tts.off": "🔇 Respuestas de audio desactivadas.",
   "tts.all": "🔊 Respuestas de audio activadas para todos los mensajes.",

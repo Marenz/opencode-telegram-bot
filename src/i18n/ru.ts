@@ -119,7 +119,8 @@ export const ru: I18nDictionary = {
   "status.health.healthy": "Healthy",
   "status.health.unhealthy": "Unhealthy",
   "status.line.health": "Статус: {health}",
-  "status.line.version": "Версия: {version}",
+  "status.line.version": "Версия OpenCode: {version}",
+  "status.line.bot_version": "Версия бота: {version}",
   "status.line.managed_yes": "Запущен ботом: Да",
   "status.line.managed_no": "Запущен ботом: Нет",
   "status.line.pid": "PID: {pid}",
@@ -138,8 +139,8 @@ export const ru: I18nDictionary = {
   "status.session_selected": "Текущая сессия: {title}",
   "status.session_not_selected": "Текущая сессия: не выбрана",
   "status.session_hint": "Используйте /sessions для выбора или /new для создания",
-  "status.server_unavailable":
-    "🔴 OpenCode Server недоступен\n\nИспользуйте /opencode_start для запуска сервера.",
+  "status.header_unavailable": "🔴 OpenCode Server недоступен",
+  "status.unavailable_hint": "Используйте /opencode_start для запуска сервера.",
 
   "tts.off": "🔇 Аудиоответы выключены.",
   "tts.all": "🔊 Аудиоответы включены для всех сообщений.",

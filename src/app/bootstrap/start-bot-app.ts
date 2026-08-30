@@ -1,6 +1,4 @@
 import fs from "node:fs/promises";
-import { readFile } from "node:fs/promises";
-
 import { cleanupBotRuntime, createBot } from "../../bot/index.js";
 import { createScheduledTaskDeliverySender } from "../../bot/messages/scheduled-task-delivery.js";
 import { config } from "../../config.js";
@@ -12,6 +10,7 @@ import {
 import { flushSettings, loadSettings } from "../stores/settings-store.js";
 import { scheduledTaskRuntime } from "../services/scheduled-task-runtime-service.js";
 import { reconcileStoredModelSelection } from "../services/model-selection-service.js";
+import { getBotVersion } from "../../runtime/bot-version.js";
 import { getRuntimeMode } from "../../runtime/mode.js";
 import { getRuntimePaths } from "../../runtime/paths.js";
 import { clearServiceStateFile } from "../../runtime/service/manager.js";
@@ -22,19 +21,6 @@ import { safeBackgroundTask } from "../../utils/safe-background-task.js";
 const SHUTDOWN_TIMEOUT_MS = 5000;
 const SETTINGS_FLUSH_TIMEOUT_MS = 1000;
 const LOG_FLUSH_TIMEOUT_MS = 1000;
-
-async function getBotVersion(): Promise<string> {
-  try {
-    const packageJsonPath = new URL("../../../package.json", import.meta.url);
-    const packageJsonContent = await readFile(packageJsonPath, "utf-8");
-    const packageJson = JSON.parse(packageJsonContent) as { version?: string };
-
-    return packageJson.version ?? "unknown";
-  } catch (error) {
-    logger.warn("[App] Failed to read bot version", error);
-    return "unknown";
-  }
-}
 
 export async function startBotApp(): Promise<void> {
   await initializeLogger();

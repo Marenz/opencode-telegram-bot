@@ -106,7 +106,7 @@ No public inbound ports are required for normal usage.
 
 Current command set:
 
-- `/status` - server, project, and session status
+- `/status` - bot version, server, project, and session status
 - `/new` - create a new session
 - `/abort` - stop the current task
 - `/detach` - detach the bot from the current session without stopping it

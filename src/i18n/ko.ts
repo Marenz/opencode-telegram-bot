@@ -127,7 +127,8 @@ export const ko: I18nDictionary = {
   "status.health.healthy": "정상",
   "status.health.unhealthy": "비정상",
   "status.line.health": "상태: {health}",
-  "status.line.version": "버전: {version}",
+  "status.line.version": "OpenCode 버전: {version}",
+  "status.line.bot_version": "Bot version: {version}",
   "status.line.managed_yes": "봇이 시작함: 예",
   "status.line.managed_no": "봇이 시작함: 아니요",
   "status.line.pid": "PID: {pid}",
@@ -146,8 +147,8 @@ export const ko: I18nDictionary = {
   "status.session_selected": "현재 세션: {title}",
   "status.session_not_selected": "현재 세션: 선택 안 됨",
   "status.session_hint": "/sessions에서 선택하거나 /new로 새로 만들어 주세요",
-  "status.server_unavailable":
-    "🔴 OpenCode 서버에 연결할 수 없습니다\n\n/opencode_start로 서버를 시작해 주세요.",
+  "status.header_unavailable": "🔴 OpenCode 서버에 연결할 수 없습니다",
+  "status.unavailable_hint": "/opencode_start로 서버를 시작해 주세요.",
 
   "tts.off": "🔇 음성 답변이 비활성화되었습니다.",
   "tts.all": "🔊 모든 메시지에 음성 답변이 활성화되었습니다.",

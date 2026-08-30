@@ -135,7 +135,7 @@ opencode-telegram config
 
 | Command           | Description                                             |
 | ----------------- | ------------------------------------------------------- |
-| `/status`         | Server health, current project, session, and model info |
+| `/status`         | Bot version, server health, current project, session, and model info |
 | `/new`            | Create a new session                                    |
 | `/abort`          | Abort the current task                                  |
 | `/detach`         | Detach from the current session without stopping it     |
