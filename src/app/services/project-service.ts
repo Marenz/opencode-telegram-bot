@@ -1,6 +1,7 @@
 import { readFile, stat } from "node:fs/promises";
 import path from "node:path";
 import { opencodeClient } from "../../opencode/client.js";
+import { config } from "../../config.js";
 import { getCachedSessionProjects } from "./session-cache-service.js";
 import { logger } from "../../utils/logger.js";
 import type { ProjectInfo } from "../types/project.js";
@@ -67,11 +68,18 @@ async function getResolvedProjects(options?: {
   const visibleProjects = projectList.filter((_, index) => !linkedWorktreeFlags[index]);
   const hiddenLinkedWorktrees = projectList.length - visibleProjects.length;
 
+  const excludedPaths = config.bot.excludedProjectPaths;
+  const excludedKeys = new Set(excludedPaths.map((excluded) => worktreeKey(excluded)));
+  const filteredProjects = excludedKeys.size > 0
+    ? visibleProjects.filter((p) => !excludedKeys.has(worktreeKey(p.worktree)))
+    : visibleProjects;
+  const hiddenExcluded = visibleProjects.length - filteredProjects.length;
+
   logger.debug(
-    `[ProjectManager] Projects resolved: api=${projects.length}, cached=${cachedProjects.length}, hiddenLinkedWorktrees=${hiddenLinkedWorktrees}, total=${visibleProjects.length}`,
+    `[ProjectManager] Projects resolved: api=${projects.length}, cached=${cachedProjects.length}, hiddenLinkedWorktrees=${hiddenLinkedWorktrees}, hiddenExcluded=${hiddenExcluded}, total=${filteredProjects.length}`,
   );
 
-  return visibleProjects;
+  return filteredProjects;
 }
 
 async function isLinkedGitWorktree(worktree: string): Promise<boolean> {
