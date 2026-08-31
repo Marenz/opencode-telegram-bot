@@ -117,7 +117,10 @@ function formatSubagentActivity(subagent: SubagentInfo, now: number): string {
   return `⚙️ ${t("subagent.working")}`;
 }
 
-async function formatSubagentCard(subagent: SubagentInfo, now: number): Promise<string> {
+export async function renderSubagentCard(
+  subagent: SubagentInfo,
+  now: number = Date.now(),
+): Promise<string> {
   const modelName = formatModelDisplayName(subagent.providerID, subagent.modelID);
   const lines = [
     `🧩 ${t("subagent.line.task", { task: subagent.description })}`,
@@ -138,6 +141,6 @@ export async function renderSubagentCards(
     return "";
   }
 
-  const parts = await Promise.all(subagents.map((subagent) => formatSubagentCard(subagent, now)));
+  const parts = await Promise.all(subagents.map((subagent) => renderSubagentCard(subagent, now)));
   return parts.filter(Boolean).join("\n\n");
 }

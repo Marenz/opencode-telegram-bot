@@ -1,5 +1,8 @@
 import { afterEach, describe, expect, it } from "vitest";
-import { renderSubagentCards } from "../../../src/app/formatters/subagent-formatter.js";
+import {
+  renderSubagentCard,
+  renderSubagentCards,
+} from "../../../src/app/formatters/subagent-formatter.js";
 import { resetRuntimeLocale, setRuntimeLocale } from "../../../src/i18n/index.js";
 
 describe("summary/subagent-formatter", () => {
@@ -10,36 +13,34 @@ describe("summary/subagent-formatter", () => {
   it("renders subagent cards with requested OpenCode-like layout", async () => {
     setRuntimeLocale("en");
 
-    const text = await renderSubagentCards([
-      {
-        cardId: "card-1",
-        sessionId: "child-1",
-        parentSessionId: "root-1",
-        agent: "explore",
-        description: "task description",
-        prompt: "task description",
-        status: "running",
-        providerID: "openai",
-        modelID: "gpt-5.4",
-        tokens: {
-          input: 54000,
-          output: 10,
-          reasoning: 0,
-          cacheRead: 0,
-          cacheWrite: 0,
-        },
-        cost: 0.18,
-        currentTool: "read",
-        currentToolInput: {
-          filePath: "src/bot/pinned/pinned-message-manager.ts",
-          offset: 1,
-          limit: 280,
-        },
-        currentToolTitle: "Reading pinned manager",
-        createdAt: Date.now(),
-        updatedAt: Date.now(),
+    const text = await renderSubagentCard({
+      cardId: "card-1",
+      sessionId: "child-1",
+      parentSessionId: "root-1",
+      agent: "explore",
+      description: "task description",
+      prompt: "task description",
+      status: "running",
+      providerID: "openai",
+      modelID: "gpt-5.4",
+      tokens: {
+        input: 54000,
+        output: 10,
+        reasoning: 0,
+        cacheRead: 0,
+        cacheWrite: 0,
       },
-    ]);
+      cost: 0.18,
+      currentTool: "read",
+      currentToolInput: {
+        filePath: "src/bot/pinned/pinned-message-manager.ts",
+        offset: 1,
+        limit: 280,
+      },
+      currentToolTitle: "Reading pinned manager",
+      createdAt: Date.now(),
+      updatedAt: Date.now(),
+    });
 
     expect(text).toContain("🧩 Task: task description");
     expect(text).toContain("Agent: explore");

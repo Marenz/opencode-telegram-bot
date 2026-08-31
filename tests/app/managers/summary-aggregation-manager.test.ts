@@ -439,7 +439,7 @@ describe("summary/aggregator", () => {
     });
   });
 
-  it("attaches unknown child session events to pending subagent cards before session.created", () => {
+  it("waits for session.created before attaching unknown child events", () => {
     const onSubagent = vi.fn();
     summaryAggregator.setOnSubagent(onSubagent);
     summaryAggregator.setSession("root-session");
@@ -459,6 +459,7 @@ describe("summary/aggregator", () => {
       },
     } as unknown as Event);
 
+    const callsBeforeUnknownEvent = onSubagent.mock.calls.length;
     summaryAggregator.processEvent({
       type: "message.part.updated",
       properties: {
@@ -480,12 +481,29 @@ describe("summary/aggregator", () => {
       },
     } as unknown as Event);
 
+    expect(onSubagent).toHaveBeenCalledTimes(callsBeforeUnknownEvent);
+
+    summaryAggregator.processEvent({
+      type: "session.created",
+      properties: {
+        info: {
+          id: "child-unknown",
+          parentID: "root-session",
+          title: "Explore architecture (@explore subagent)",
+          slug: "child-unknown",
+          directory: "D:/repo",
+          projectID: "p1",
+          version: "1",
+          time: { created: Date.now(), updated: Date.now() },
+        },
+      },
+    } as unknown as Event);
+
     expect(onSubagent.mock.lastCall?.[1]).toEqual([
       expect.objectContaining({
         sessionId: "child-unknown",
-        cost: 0.12,
-        tokens: expect.objectContaining({ input: 1000, cacheRead: 200 }),
-        currentToolTitle: "step snapshot",
+        cost: 0,
+        tokens: expect.objectContaining({ input: 0, cacheRead: 0 }),
       }),
     ]);
   });
@@ -569,7 +587,7 @@ describe("summary/aggregator", () => {
     ]);
   });
 
-  it("keeps subagent cards and updates terminal status for child sessions", () => {
+  it("emits terminal subagent cards once and excludes them from later snapshots", () => {
     const onSubagent = vi.fn();
     summaryAggregator.setOnSubagent(onSubagent);
     summaryAggregator.setSession("root-session");
@@ -611,6 +629,10 @@ describe("summary/aggregator", () => {
         sessionID: "child-done",
       },
     } as unknown as Event);
+
+    expect(onSubagent.mock.lastCall?.[1]).toEqual([
+      expect.objectContaining({ sessionId: "child-done", status: "completed" }),
+    ]);
 
     summaryAggregator.processEvent({
       type: "message.part.updated",
@@ -654,7 +676,6 @@ describe("summary/aggregator", () => {
     } as unknown as Event);
 
     expect(onSubagent.mock.lastCall?.[1]).toEqual([
-      expect.objectContaining({ sessionId: "child-done", status: "completed" }),
       expect.objectContaining({
         sessionId: "child-error",
         status: "error",
@@ -728,6 +749,278 @@ describe("summary/aggregator", () => {
     } as unknown as Event);
 
     expect(onSubagent).toHaveBeenCalledTimes(callsAfterIdle);
+
+    summaryAggregator.processEvent({
+      type: "message.part.updated",
+      properties: {
+        part: {
+          id: "late-child-tool",
+          sessionID: "child-done",
+          messageID: "late-child-message",
+          type: "tool",
+          callID: "late-call",
+          tool: "bash",
+          state: {
+            status: "running",
+            input: { command: "echo late" },
+            metadata: {},
+          },
+        },
+      },
+    } as unknown as Event);
+
+    expect(onSubagent).toHaveBeenCalledTimes(callsAfterIdle);
+
+    summaryAggregator.processEvent({
+      type: "message.part.updated",
+      properties: {
+        part: {
+          id: "subtask-2",
+          sessionID: "root-session",
+          messageID: "root-message-2",
+          type: "subtask",
+          prompt: "new task",
+          description: "new task",
+          agent: "explore",
+        },
+      },
+    } as unknown as Event);
+
+    summaryAggregator.processEvent({
+      type: "session.created",
+      properties: {
+        info: {
+          id: "child-new",
+          parentID: "root-session",
+          title: "new task (@explore subagent)",
+          slug: "child-new",
+          directory: "D:/repo",
+          projectID: "p1",
+          version: "1",
+          time: { created: Date.now(), updated: Date.now() },
+        },
+      },
+    } as unknown as Event);
+
+    expect(onSubagent.mock.lastCall?.[1]).toEqual([
+      expect.objectContaining({ sessionId: "child-new", description: "new task" }),
+    ]);
+  });
+
+  it("freezes unfinished subagent cards when the root session errors", () => {
+    const onSubagent = vi.fn();
+    summaryAggregator.setOnSubagent(onSubagent);
+    summaryAggregator.setSession("root-session");
+
+    summaryAggregator.processEvent({
+      type: "message.part.updated",
+      properties: {
+        part: {
+          id: "subtask-1",
+          sessionID: "root-session",
+          messageID: "root-message",
+          type: "subtask",
+          prompt: "running task",
+          description: "running task",
+          agent: "explore",
+        },
+      },
+    } as unknown as Event);
+
+    summaryAggregator.processEvent({
+      type: "session.created",
+      properties: {
+        info: {
+          id: "child-running",
+          parentID: "root-session",
+          title: "running task (@explore subagent)",
+          slug: "child-running",
+          directory: "D:/repo",
+          projectID: "p1",
+          version: "1",
+          time: { created: Date.now(), updated: Date.now() },
+        },
+      },
+    } as unknown as Event);
+
+    summaryAggregator.processEvent({
+      type: "message.part.updated",
+      properties: {
+        part: {
+          id: "subtask-pending",
+          sessionID: "root-session",
+          messageID: "root-message",
+          type: "subtask",
+          prompt: "pending task",
+          description: "pending task",
+          agent: "explore",
+        },
+      },
+    } as unknown as Event);
+
+    const callsBeforeError = onSubagent.mock.calls.length;
+    summaryAggregator.processEvent({
+      type: "session.error",
+      properties: {
+        sessionID: "root-session",
+        error: { data: { message: "Aborted" } },
+      },
+    } as unknown as Event);
+
+    summaryAggregator.processEvent({
+      type: "message.part.updated",
+      properties: {
+        part: {
+          id: "late-child-tool",
+          sessionID: "child-running",
+          messageID: "late-child-message",
+          type: "tool",
+          callID: "late-call",
+          tool: "bash",
+          state: {
+            status: "running",
+            input: { command: "echo late" },
+            metadata: {},
+          },
+        },
+      },
+    } as unknown as Event);
+
+    summaryAggregator.processEvent({
+      type: "session.created",
+      properties: {
+        info: {
+          id: "child-pending-late",
+          parentID: "root-session",
+          title: "pending task (@explore subagent)",
+          slug: "child-pending-late",
+          directory: "D:/repo",
+          projectID: "p1",
+          version: "1",
+          time: { created: Date.now(), updated: Date.now() },
+        },
+      },
+    } as unknown as Event);
+
+    expect(onSubagent).toHaveBeenCalledTimes(callsBeforeError);
+  });
+
+  it("rejects delayed child discovery after root idle and the next run starts", () => {
+    const onSubagent = vi.fn();
+    summaryAggregator.setOnSubagent(onSubagent);
+    summaryAggregator.setSession("root-session");
+
+    summaryAggregator.processEvent({
+      type: "message.part.updated",
+      properties: {
+        part: {
+          id: "subtask-old",
+          sessionID: "root-session",
+          messageID: "root-message-old",
+          type: "subtask",
+          prompt: "old task",
+          description: "old task",
+          agent: "explore",
+        },
+      },
+    } as unknown as Event);
+
+    summaryAggregator.processEvent({
+      type: "session.idle",
+      properties: { sessionID: "root-session" },
+    } as unknown as Event);
+
+    summaryAggregator.processEvent({
+      type: "message.updated",
+      properties: {
+        info: {
+          id: "user-message-new",
+          sessionID: "root-session",
+          role: "user",
+          time: { created: 2_000 },
+        },
+      },
+    } as unknown as Event);
+
+    const callsBeforeLateChild = onSubagent.mock.calls.length;
+    summaryAggregator.processEvent({
+      type: "session.created",
+      properties: {
+        info: {
+          id: "child-old-late",
+          parentID: "root-session",
+          title: "old task (@explore subagent)",
+          slug: "child-old-late",
+          directory: "D:/repo",
+          projectID: "p1",
+          version: "1",
+          time: { created: 1_000, updated: 2_500 },
+        },
+      },
+    } as unknown as Event);
+
+    expect(onSubagent).toHaveBeenCalledTimes(callsBeforeLateChild);
+  });
+
+  it("retains exact finished identities beyond 200 subagents", () => {
+    const onSubagent = vi.fn();
+    summaryAggregator.setOnSubagent(onSubagent);
+    summaryAggregator.setSession("root-session");
+
+    for (let index = 0; index < 201; index++) {
+      summaryAggregator.processEvent({
+        type: "message.part.updated",
+        properties: {
+          part: {
+            id: `subtask-${index}`,
+            sessionID: "root-session",
+            messageID: "root-message",
+            type: "subtask",
+            prompt: `task ${index}`,
+            description: `task ${index}`,
+            agent: "explore",
+          },
+        },
+      } as unknown as Event);
+      summaryAggregator.processEvent({
+        type: "session.created",
+        properties: {
+          info: {
+            id: `child-${index}`,
+            parentID: "root-session",
+            title: `task ${index} (@explore subagent)`,
+            slug: `child-${index}`,
+            directory: "D:/repo",
+            projectID: "p1",
+            version: "1",
+            time: { created: index + 1, updated: index + 1 },
+          },
+        },
+      } as unknown as Event);
+      summaryAggregator.processEvent({
+        type: "session.idle",
+        properties: { sessionID: `child-${index}` },
+      } as unknown as Event);
+    }
+
+    const callsAfterCompletions = onSubagent.mock.calls.length;
+    summaryAggregator.processEvent({
+      type: "session.updated",
+      properties: {
+        info: {
+          id: "child-0",
+          parentID: "root-session",
+          title: "task 0 (@explore subagent)",
+          slug: "child-0",
+          directory: "D:/repo",
+          projectID: "p1",
+          version: "1",
+          time: { created: 1, updated: 1_000 },
+        },
+      },
+    } as unknown as Event);
+
+    expect(onSubagent).toHaveBeenCalledTimes(callsAfterCompletions);
   });
 
   it("marks write tool without file attachment when payload is oversized", () => {
