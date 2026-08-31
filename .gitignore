@@ -35,6 +35,7 @@ settings.json
 settings.json.bak
 settings.json.tmp
 .tmp/
+e2e/output/
 
 # Packaging artifacts
 *.tgz
