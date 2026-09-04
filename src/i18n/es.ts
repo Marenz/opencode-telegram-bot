@@ -418,7 +418,7 @@ export const es: I18nDictionary = {
   "keyboard.queued_prompt": "❌ {index}. {text}",
   "queue.added":
     "📥 Añadido a la cola ({count}/{max}). Se enviará cuando termine la tarea actual.",
-  "queue.media_limit": "⚠️ Los archivos multimedia en cola están limitados a {maxSizeMb} MB. Espera a que se envíe un elemento.",
+  "queue.media_limit": "⚠️ Los archivos multimedia en cola están limitados a {maxSizeMb} MiB. Espera a que se envíe un elemento.",
   "queue.full":
     "⚠️ La cola está llena ({max}). Elimina un mensaje o espera a que termine la tarea actual.",
   "queue.removed": "🗑 Mensaje eliminado de la cola.",

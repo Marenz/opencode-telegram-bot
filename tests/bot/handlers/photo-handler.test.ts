@@ -13,7 +13,6 @@ import { createIncomingPrompt } from "../../../src/app/types/prompt.js";
 import { promptQueue } from "../../../src/app/managers/prompt-queue-manager.js";
 import { foregroundSessionState } from "../../../src/app/managers/foreground-session-state-manager.js";
 import * as settingsStore from "../../../src/app/stores/settings-store.js";
-import { t } from "../../../src/i18n/index.js";
 
 function createPhotoContext(caption = "Describe this"): { ctx: Context; replyMock: ReturnType<typeof vi.fn> } {
   const replyMock = vi.fn().mockResolvedValue({ message_id: 100 });
@@ -23,7 +22,7 @@ function createPhotoContext(caption = "Describe this"): { ctx: Context; replyMoc
       caption,
       photo: [
         { file_id: "small-photo", file_unique_id: "small", width: 320, height: 240 },
-        { file_id: "large-photo", file_unique_id: "large", width: 1280, height: 960 },
+        { file_id: "large-photo", file_unique_id: "large", width: 1280, height: 960, file_size: 512 },
       ],
     },
     reply: replyMock,
@@ -66,7 +65,7 @@ describe("bot/handlers/photo-handler", () => {
     foregroundSessionState.__resetForTests();
   });
 
-  it("queues a downloaded photo while the agent is busy", async () => {
+  it("queues a photo without downloading it while the agent is busy", async () => {
     vi.spyOn(settingsStore, "getPromptQueueEnabled").mockReturnValue(true);
     foregroundSessionState.markBusy("session-1", "/repo");
     const { ctx } = createPhotoContext("release screenshot");
@@ -79,7 +78,8 @@ describe("bot/handlers/photo-handler", () => {
       expect.objectContaining({
         text: "release screenshot",
         displayText: "release screenshot",
-        fileParts: [expect.objectContaining({ filename: "photo.jpg", mime: "image/jpeg" })],
+        photos: [expect.objectContaining({ filename: "photo.jpg", fileId: "large-photo" })],
+        mediaBytes: 512,
       }),
     ]);
   });

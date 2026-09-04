@@ -15,7 +15,10 @@ import { processUserPrompt, type ProcessPromptDeps } from "./prompt.js";
 import { createIncomingPrompt, type IncomingPrompt } from "../../app/types/prompt.js";
 import { flushPendingPrompt } from "./message-merger.js";
 import { handleUnsupportedMessages } from "./unsupported-message-handler.js";
-import { tryEnqueuePromptIfBusy } from "./prompt-queue-dispatch.js";
+import {
+  rejectQueuedMediaBeforePreparation,
+  tryEnqueuePromptIfBusy,
+} from "./prompt-queue-dispatch.js";
 
 const DEFAULT_MEDIA_GROUP_DEBOUNCE_MS = 1_000;
 
@@ -220,6 +223,22 @@ export class MediaGroupAttachmentHandler {
         return;
       }
 
+      const mediaBytes = items.reduce<number | undefined>((total, item) => {
+        if (total === undefined) {
+          return undefined;
+        }
+        if (item.kind === "photo") {
+          const size = item.photos[item.photos.length - 1]?.file_size;
+          return size === undefined ? undefined : total + size;
+        }
+        if (item.kind === "document") {
+          return item.document.file_size === undefined ? undefined : total + item.document.file_size;
+        }
+        return total;
+      }, 0);
+      if (await rejectQueuedMediaBeforePreparation(replyCtx, mediaBytes)) {
+        return;
+      }
       await replyCtx.reply(t("bot.files_downloading"));
 
       const { promptText, fileParts } = await this.preparePrompt(validationResult.items, items);
@@ -237,6 +256,7 @@ export class MediaGroupAttachmentHandler {
           ...createIncomingPrompt(promptText, { fileParts }),
           displayText: captions.join(" / ") || `[Album: ${items.length} files]`,
           fileParts,
+          ...(mediaBytes === undefined ? {} : { mediaBytes }),
         })
       ) {
         return;

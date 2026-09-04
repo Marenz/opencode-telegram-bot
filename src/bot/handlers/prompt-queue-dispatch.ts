@@ -1,6 +1,7 @@
 import type { Context } from "grammy";
 import {
   MAX_QUEUED_PROMPTS,
+  MAX_QUEUED_MEDIA_BYTES,
   promptQueue,
   type QueuedPromptInput,
 } from "../../app/managers/prompt-queue-manager.js";
@@ -81,7 +82,7 @@ export async function tryEnqueuePrompt(ctx: Context, input: QueuedPromptInput): 
   }
 
   if (!promptQueue.canAcceptMedia(input.mediaBytes ?? 0)) {
-    await replyWithKeyboard(ctx, t("queue.media_limit", { maxSizeMb: "20" }));
+    await replyWithKeyboard(ctx, t("queue.media_limit", { maxSizeMb: formatQueuedMediaLimit() }));
     return true;
   }
 
@@ -105,6 +106,37 @@ export async function tryEnqueuePromptIfBusy(
   input: QueuedPromptInput,
 ): Promise<boolean> {
   return isForegroundBusy() && tryEnqueuePrompt(ctx, input);
+}
+
+/**
+ * Rejects a busy queued-media candidate before handlers download or encode it.
+ * Media sizes are raw Telegram file_size values, not expanded data-URI bytes.
+ */
+export async function rejectQueuedMediaBeforePreparation(
+  ctx: Context,
+  mediaBytes: number | undefined,
+): Promise<boolean> {
+  if (!isForegroundBusy() || !getPromptQueueEnabled() || !ctx.chat) {
+    return false;
+  }
+  if (promptQueue.isFull()) {
+    await replyWithKeyboard(ctx, t("queue.full", { max: String(MAX_QUEUED_PROMPTS) }));
+    return true;
+  }
+  if (
+    typeof mediaBytes !== "number" ||
+    !Number.isSafeInteger(mediaBytes) ||
+    mediaBytes < 0 ||
+    !promptQueue.canAcceptMedia(mediaBytes)
+  ) {
+    await replyWithKeyboard(ctx, t("queue.media_limit", { maxSizeMb: formatQueuedMediaLimit() }));
+    return true;
+  }
+  return false;
+}
+
+function formatQueuedMediaLimit(): string {
+  return String(MAX_QUEUED_MEDIA_BYTES / (1024 * 1024));
 }
 
 /**

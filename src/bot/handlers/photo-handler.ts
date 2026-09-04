@@ -2,7 +2,10 @@ import type { Context } from "grammy";
 import { createIncomingPrompt, type IncomingPrompt } from "../../app/types/prompt.js";
 import { flushPendingPrompt } from "./message-merger.js";
 import { processUserPrompt, type ProcessPromptDeps } from "./prompt.js";
-import { tryEnqueuePromptIfBusy } from "./prompt-queue-dispatch.js";
+import {
+  rejectQueuedMediaBeforePreparation,
+  tryEnqueuePromptIfBusy,
+} from "./prompt-queue-dispatch.js";
 
 export interface PhotoHandlerDeps extends ProcessPromptDeps {
   processPrompt?: (
@@ -28,11 +31,14 @@ export async function handlePhotoMessage(ctx: Context, deps: PhotoHandlerDeps): 
   const input = createIncomingPrompt(caption, {
     photos: [{ fileId: largestPhoto.file_id, filename: "photo.jpg", source: "standalone" }],
   });
+  if (await rejectQueuedMediaBeforePreparation(ctx, largestPhoto.file_size)) {
+    return;
+  }
   if (
     await tryEnqueuePromptIfBusy(ctx, {
       ...input,
       displayText: caption.trim() || "[Photo]",
-      mediaBytes: largestPhoto.file_size ?? 0,
+      ...(largestPhoto.file_size === undefined ? {} : { mediaBytes: largestPhoto.file_size }),
     })
   ) {
     return;

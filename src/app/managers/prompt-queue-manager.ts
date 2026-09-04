@@ -32,7 +32,7 @@ class PromptQueueManager {
 
   add(input: QueuedPromptInput): QueuedPrompt | null {
     const normalizedText = input.text.trim();
-    const displayText = (input.displayText ?? normalizedText).trim();
+    const displayText = (input.displayText ?? (normalizedText || "[Attachment]")).trim();
     const mediaBytes = input.mediaBytes ?? 0;
     if (
       (!normalizedText && input.fileParts.length === 0 && input.photos.length === 0) ||

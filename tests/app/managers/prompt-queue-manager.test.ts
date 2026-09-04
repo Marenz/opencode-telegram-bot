@@ -1,6 +1,7 @@
 import { beforeEach, describe, expect, it } from "vitest";
 import {
   MAX_QUEUED_PROMPTS,
+  MAX_QUEUED_MEDIA_BYTES,
   promptQueue,
 } from "../../../src/app/managers/prompt-queue-manager.js";
 import { createIncomingPrompt } from "../../../src/app/types/prompt.js";
@@ -79,7 +80,21 @@ describe("app/managers/prompt-queue-manager", () => {
       text: "",
       fileParts: [],
       photos: [photo],
+      displayText: "[Attachment]",
+      mediaBytes: 0,
     });
+  });
+
+  it("caps aggregate raw media bytes and releases them when an item is dequeued", () => {
+    const underCap = MAX_QUEUED_MEDIA_BYTES - 1;
+    expect(promptQueue.add({ ...prompt("album one"), mediaBytes: underCap })).not.toBeNull();
+    expect(promptQueue.canAcceptMedia(2)).toBe(false);
+    expect(promptQueue.add({ ...prompt("album two"), mediaBytes: 2 })).toBeNull();
+
+    promptQueue.takeNext();
+
+    expect(promptQueue.mediaSize()).toBe(0);
+    expect(promptQueue.add({ ...prompt("album two"), mediaBytes: 2 })).not.toBeNull();
   });
 
   it("frees a slot after taking a prompt", () => {
